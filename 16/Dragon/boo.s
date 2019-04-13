@@ -1,4 +1,5 @@
 	.text
+	.section	.rodata
 .LC0:
 	.string	"%d\n"
 	.text
@@ -8,12 +9,31 @@ boo:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	subq	$8, %rsp # lowering the stack pointer.
-	movq	$13, %rax
-	movq	%rax, -4(%rbp)
-	movq	-4(%rbp), %rax
-	movq	%rax, %rsi
-	movq	$.LC0, %rdi
-	movq	$0, %rax
+	movl	$13, %eax  # moved register values
+	movl	%eax, -4(%rbp)  # moved register values
+	movl	$12, %eax  # moved register values
+	movl	%eax, -8(%rbp)  # moved register values
+	movl	-4(%rbp), %eax  # moved register values
+	movl	%eax, %esi
+	leaq	.LC0(%rip), %rdi
+	movl	$0, %eax
+	call	printf
+	movl	-8(%rbp), %eax  # moved register values
+	movl	%eax, %esi
+	leaq	.LC0(%rip), %rdi
+	movl	$0, %eax
+	call	printf
+	movl	-4(%rbp), %eax  # moved register values
+	movl	%eax, %esi
+	leaq	.LC0(%rip), %rdi
+	movl	$0, %eax
+	call	printf
+	movl	-8(%rbp), %eax  # moved register values
+	movl	%eax, -4(%rbp)  # moved register values
+	movl	-4(%rbp), %eax  # moved register values
+	movl	%eax, %esi
+	leaq	.LC0(%rip), %rdi
+	movl	$0, %eax
 	call	printf
 	leave
 	ret

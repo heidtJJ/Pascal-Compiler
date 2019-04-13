@@ -22,7 +22,7 @@ char* procedureCodeEnd = "\tleave\n\tret\n";
 char* procedureEndInfo = "\n\t.globl\tmain\n\t.type\tmain, @function\n";
 
 // Code for printf assembly.
-char* printfEndCode = ", %eax\n    movq\t%eax, %rsi\n    leaq\t.LC0(%rip), %rdi\n    movl\t$0, %eax\n    call\tprintf\n";
+char* printfEndCode = ", %esi\n\tleaq\t.LC0(%rip), %rdi\n\tmovl\t$0, %eax\n\tcall\tprintf\n";
 
 /* Assembly for MAIN */
 char* firstPartMainAsm = "main:\n\tpushq\t%rbp\n\tmovq\t%rsp, %rbp\n\tmovl\t$0, %eax\n";
@@ -47,12 +47,11 @@ void setupRegisterStack(){
 	registerStack = pushRegister(registerStack, "%r10");
 	registerStack = pushRegister(registerStack, "%r9");
 	registerStack = pushRegister(registerStack, "%r8");
-	registerStack = pushRegister(registerStack, "%rdi");
-	registerStack = pushRegister(registerStack, "%rsi");
-	registerStack = pushRegister(registerStack, "%rdx");
-	registerStack = pushRegister(registerStack, "%rcx");
-	registerStack = pushRegister(registerStack, "%rbx");
-	registerStack = pushRegister(registerStack, "%rax");
+	registerStack = pushRegister(registerStack, "%edi");
+	registerStack = pushRegister(registerStack, "%edx");
+	registerStack = pushRegister(registerStack, "%ecx");
+	registerStack = pushRegister(registerStack, "%ebx");
+	registerStack = pushRegister(registerStack, "%eax");
 }
 
 void freeRegisters(){
@@ -111,25 +110,17 @@ char* getFileName(char* programId){
     return fileName;
 }
 
-void genMovqCode(FILE* outFile, char* arg1, char* arg2){
-    fputs("\tmovq\t", outFile);
+void genMovlCode(FILE* outFile, char* arg1, char* arg2){
+    fputs("\tmovl\t", outFile);
     char strInum[8];// Could be dangerous. Rare for arg to have >8 characters though.
     fputs(arg1, outFile);
     fputs(", ", outFile);
     fputs(arg2, outFile);
-    fputs("\n", outFile);
+    fputs("  # moved register values\n", outFile);
 }
 
 void genPrintfCode(FILE* outFile, char* stackLocation){
-    /*
-    movq	-4(%rbp), %eax
-    movq	%eax, %rsi
-    leaq	.LC0(%rip), %rdi
-    movl	$0, %eax
-    call	printf
-    */
-    
-    fputs("\tmovq\t", outFile);
+    fputs("\tmovl\t", outFile);
     fputs(stackLocation, outFile);
     fputs(printfEndCode, outFile);
 }
@@ -164,7 +155,7 @@ void genStatement(FILE* outFile, tree_t* root){
             node_t* idNode = varTree->attribute.nval;
             char strOffset[12];// Could be dangerous. Rare that the offset has >12 characters though.
             getOffsetString(idNode, strOffset);
-            genMovqCode(outFile, registerStack->registerName, strOffset);
+            genMovlCode(outFile, registerStack->registerName, strOffset);
         }
         else{// varTree->type == ARRAY_ACCESS
             assert(varTree->type == ARRAY_ACCESS);
@@ -182,18 +173,8 @@ void genStatement(FILE* outFile, tree_t* root){
         labelTree(exprTree);
         genExpression(outFile, exprTree);
         // Expression return value is now in top register.
-        //genPrintfCode(outFile, registerStack->registerName);
-        // move this value which is now in %rax into a parameter for printf
-        fputs("\tmovq\t", outFile);
-        fputs(registerStack->registerName, outFile);
-        fputs(", %rsi\n", outFile);
-
-        // Push string into register
-        fputs("\tmovq\t$.LC0, %rdi\n", outFile);
-        fputs("\tmovq\t$0, %rax\n", outFile);
-
-        // Call printf
-        fputs("\tcall\tprintf\n", outFile);
+        genPrintfCode(outFile, registerStack->registerName);
+        
     }
     else if(root->type == READ){
         
@@ -210,7 +191,7 @@ void genExpression(FILE* outFile, tree_t* root){
         if(root->type == INUM){
             char strNum[8];
             sprintf(strNum, "$%d", root->attribute.ival);
-            genMovqCode(outFile, strNum, registerStack->registerName);
+            genMovlCode(outFile, strNum, registerStack->registerName);
         }
         else if(root->type == RNUM){
 
@@ -219,7 +200,7 @@ void genExpression(FILE* outFile, tree_t* root){
             node_t* idNode = root->attribute.nval;
             char strOffset[12];
             getOffsetString(idNode, strOffset);
-            genMovqCode(outFile, strOffset, registerStack->registerName);
+            genMovlCode(outFile, strOffset, registerStack->registerName);
         }
         else{
             assert(0);
