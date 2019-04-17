@@ -22,7 +22,9 @@ boo:
 	movl	$0, %eax
 	call	__isoc99_scanf@PLT
 	movl	$1, %ebx  # moved register values
-	addl	-24(%rbp), %ebx
+	movl	-24(%rbp), %ecx  # moved register values
+	imull	$4, %ecx
+	addl	%ecx, %ebx
 	addl	$1, %ebx
 	movl	$2, %ecx  # moved register values
 	imull	$4, %ecx

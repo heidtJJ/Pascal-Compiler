@@ -6,6 +6,6 @@ program boo( input, output );
 begin
     z := 1;
     read(z);
-    write(1+z+1+2*4*1);
+    write(1+z*4+1+2*4*1);
 end.
 

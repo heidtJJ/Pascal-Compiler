@@ -242,7 +242,7 @@ int getOperatorString(tree_t* operatorRoot, char* operatorString){
         sprintf(operatorString, "imull");
     }
     else if(operatorRoot->attribute.opval == SLASH){
-        assert(0);        
+        sprintf(operatorString, "idivl");
     }
     else{
         fprintf(stderr, "FUCK\n");
