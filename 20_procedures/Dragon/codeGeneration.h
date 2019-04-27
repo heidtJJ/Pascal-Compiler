@@ -6,7 +6,7 @@
 
 void labelTree(tree_t* root, short isLeftMost);
 char* getFileName(char* programId);
-void genExpression(FILE* outFile, tree_t* root, scope_t* topScope);
+void genExpression(FILE* outFile, tree_t* root, scope_t* topScope, short isLeftMost);
 void genStatement(FILE* outFile, tree_t* root, scope_t* topScope);
 void genCodePrintMain(FILE* outFile, char* fileName);
 void genCodePrintHeader(FILE* outFile);
@@ -21,6 +21,13 @@ note to chase var in current scope
 
 movl %ebp %ecx
 movl (%ecx) %ecx
+
+
+to save registers.
+
+	pushq	%rcx
+	movq	(%rsp), %rcx
+
 
 */
 

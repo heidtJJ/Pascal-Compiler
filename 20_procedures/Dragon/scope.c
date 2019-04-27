@@ -15,6 +15,7 @@ scope_t* mkscope(){
         newScope->table[i] = NULL;
     }
     newScope->next = NULL;
+    newScope->scopeName = NULL;
     newScope->scopeOwner = NULL;
     newScope->curScopeSize = FRAME_BLOCK_SIZE;
     newScope->scopeBlockCounter = 8;// 8 bytes are needed by gcc on stack.
@@ -47,11 +48,44 @@ void free_scope(scope_t* top){
     free(top);
 }
 
+
+char* getScopeName(scope_t* newTop){
+    assert(newTop != NULL);
+
+    if(newTop->next == NULL){
+        return strdup(newTop->scopeOwner->name);   
+    }
+    else{
+        // Get name of current scope owner. 
+        fprintf(stderr, "\n%d\n", newTop->scopeOwner->name);
+        
+        char* curScopeOwnerName = newTop->scopeOwner->name;
+        int curScopeOwnerNameLen = strlen(curScopeOwnerName);
+        // Get name of the previous scope (Ex: boo_foo).
+        char* lastScopeName = newTop->next->scopeName;
+        int lastScopeNameLen = strlen(lastScopeName);
+        int newTopScopeNameLen = curScopeOwnerNameLen + lastScopeNameLen + 1;
+
+        char* newTopScopeName = (char*) malloc(sizeof(char)*newTopScopeNameLen);
+        int scopeNameIndex = 0;
+        for(int i = 0; i < lastScopeNameLen; ++i){
+            newTopScopeName[scopeNameIndex++] = lastScopeName[i];
+        }
+        newTopScopeName[scopeNameIndex++] = '_';
+        for(int i = 0; i < curScopeOwnerNameLen; ++i){
+            newTopScopeName[scopeNameIndex++] = curScopeOwnerName[i];
+        }
+        return newTopScopeName;
+    }
+}
+
 /* Stack Manipulation */
 scope_t* push_scope(scope_t* top, node_t* scopeOwner){
+    assert(scopeOwner != NULL);
     scope_t* newTop = mkscope();
     newTop->scopeOwner = scopeOwner;
     newTop->next = top;
+    newTop->scopeName = getScopeName(newTop);
     return newTop;
 }
 
@@ -126,6 +160,7 @@ node_t* scope_insert_function(scope_t* top, int returnType, char* name, node_t* 
 
 // Searches in current (top) scope for a name.
 node_t* scope_search(scope_t* top, char* name){
+    assert(top != NULL);
     int indexToSearch = hashpjw(name);
     node_t* nodeToSearch = top->table[indexToSearch];
     return node_search(nodeToSearch, name);

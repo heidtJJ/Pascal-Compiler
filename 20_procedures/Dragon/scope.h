@@ -24,6 +24,7 @@ typedef struct scope_s {
     */
     int scopeBlockCounter;
     int tempsAddress;
+    char* scopeName;// Used for referencing subprogram names for assembly.
 } scope_t;
 
 /* Constructor */
@@ -46,6 +47,7 @@ node_t* scope_insert_procedure(scope_t* top, char* name, node_t* arguments);
 node_t* scope_insert_function(scope_t* top, int returnType, char* name, node_t* arguments);
 
 int addVariableToScope(scope_t* top, int numBytes);
+char* getScopeName(scope_t* newTop);
 
 void scope_print(scope_t* top);
 

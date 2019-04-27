@@ -1,22 +1,22 @@
 program boo( input, output );
-	var x,y: integer;
-	function foo(a: integer; b: integer): integer;
+	var x: integer;
+	
+	procedure foo(a: integer);
+		procedure coo(a: integer);
+			begin
+				write(x);
+				x := 1;
+			end;
 		begin
-			foo := a * 10;
-			b := 4;
-			foo := b; 
-		end;
-	procedure coo(a: integer);
-		begin
-			x := 22;
-			write(x)
+			coo(1);
+			write(x);
+			x := 2;
 		end;
 	begin
-		read(x);
+		x := 22;
+		foo(1);
 		write(x);
-
-		coo(1);
+		x := 3;
 		write(x);
-
 	end.
 

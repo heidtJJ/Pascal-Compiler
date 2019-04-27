@@ -63,16 +63,22 @@ char* my_itoa(int num, char *str){
     return str;
 }
 
+/*
+    Register stack is setup with only 3 registers.
+*/
 void setupRegisterStack(){
-	registerStack = pushRegisterStr(NULL, "%edi");
-	registerStack = pushRegisterStr(registerStack, "%ecx");
-	registerStack = pushRegisterStr(registerStack, "%ebx");
+	registerStack = pushRegisterString(NULL, "%edi");
+	registerStack = pushRegisterString(registerStack, "%ecx");
+	registerStack = pushRegisterString(registerStack, "%ebx");
 }
 
 void freeRegisters(){
     freeRegisterStack(registerStack);
 }
 
+/*
+    Prints the assembly headers to outFile. Look at topHeader.
+*/
 void genCodePrintHeader(FILE* outFile){
     fputs(topHeader, outFile);
 }
@@ -127,27 +133,30 @@ void genMovlCode(FILE* outFile, char* arg1, char* arg2){
 
 
 /*
-    Outputs code to put the value in idNode into %eax. 
+    Outputs code to put the value in idNode into %eax. This variable
+    could be outside of the current scope. If it is, then %rax must 
+    chase the variable to its scope.
 */
 void getVarOffset(FILE* outFile, node_t* idNode, char* offsetString, scope_t* topScope){
     assert(topScope != NULL);
     if(scope_search(topScope, idNode->name) != NULL ){
+        // Variable is in current scope. 
         getOffsetString(idNode->frameOffset, offsetString, RBP);
     }
     else{
+        // Variable is in a different scope. 
         short firstPass = 1;
         while(scope_search(topScope, idNode->name) == NULL){
-            assert(topScope != NULL);
-            topScope = topScope->next;
             if(firstPass){
+                // Move the base pointer to %rax on the first pass.
                 genMovqCode(outFile, RBP, "%rax");
             }
+            assert(topScope != NULL);
+            topScope = topScope->next;
             genMovqCode(outFile, "(%rax)", "%rax");
             firstPass = 0;
         }
         getOffsetString(idNode->frameOffset, offsetString, "%rax");
-
-        fprintf(stderr, "HERE2: %s\n", offsetString);
     }
 }
 
@@ -215,8 +224,8 @@ void genCodePrintMain(FILE* outFile, char* mainProcName){
 
 
 /*
-    Returns the filename for a programId. fileName must be freed.
-    Filename extension is ".s"
+    Returns the filename for a programId. fileName must be freed
+    later. Filename extension is ".s"
 */
 char* getFileName(char* programId){
     int fileNameLen = strlen(programId) + 2; // +2 for .s 
@@ -246,6 +255,126 @@ void genReadCode(FILE* outFile, char* stackLocation){
     fputs(stackLocation, outFile);
     fputs(scanfEndCode, outFile);
 }
+
+
+void genPushqCode(FILE* outFile, char* locationToPush){
+    fputs("\tpushq\t", outFile);
+    fputs(locationToPush, outFile);
+    fputs("\n", outFile);
+}
+
+void pushAllRegisters(FILE* outFile){
+    genPushqCode(outFile, "%rdi");
+    genPushqCode(outFile, "%rcx");
+    genPushqCode(outFile, "%rbx");
+}
+
+void restoreAllRegisters(FILE* outFile){
+    genMovqCode(outFile, "0(%rsp)", "%rbx");
+    genMovqCode(outFile, "4(%rsp)", "%rcx");
+    genMovqCode(outFile, "8(%rsp)", "%rdi");
+    fputs("\taddq\t$12, %rsp\n", outFile);
+}
+
+/*
+    Translates the value of the leaf into a string readable by x86 code.
+*/
+void getLeafString(FILE* outFile, tree_t* leaf, char* leafString, scope_t* topScope){
+    assert(leaf->label == 0 || leaf->label == 1);
+    if(leaf->type == INUM){
+        sprintf(leafString, "$%d", leaf->attribute.ival);
+    }
+    else if(leaf->type == RNUM){
+        assert(0);
+    }
+    else if(leaf->type == ID){
+        node_t* idNode = leaf->attribute.nval;
+        if(scope_search(topScope, idNode->name) != NULL){
+            // This variable is in the current scope.
+            getOffsetString(idNode->frameOffset, leafString, RBP);
+        }
+        else{
+            // This variable is in a different scope. Must start chasing.
+            getVarOffset(outFile, leaf->attribute.nval, leafString, topScope);
+        }
+    }
+    else{
+        fprintf(stderr, "%d\n", leaf->type);
+        assert(0);
+    }
+    return;
+}
+
+/*
+    Labels the expression tree to prepare it for 
+    genExpression (gen_code).
+*/
+void labelTree(tree_t* root, short isLeftMost){
+    // For now, assume no functions or NOT.
+    if(root == NULL){
+        assert(0);
+        return;
+    }
+    // Leaf case should only happen when no operators.
+    else if(isLeaf(root)){
+        fprintf(stderr, "%d\n", root->type);
+        root->label = 1;
+        return;
+    }
+    // NOT case should make current node have child's label
+    else if(root->type == NOT){
+        labelTree(root->leftChild, 1);
+        root->label = root->leftChild->label;
+        return;
+    }
+    // For function call, label is the max label of the expression arguments. 
+    else if(root->type == FUNCTION_CALL){
+        // Retrieve the argument list for this function.
+        TreeList* curArgument = root->rightChild->attribute.listVal;
+        int maxLabel = isLeftMost;
+        while(curArgument != NULL){
+            // Retrieve the expression tree from this argument.
+            tree_t* curArgumentExpr = curArgument->statementTree;
+            labelTree(curArgumentExpr, isLeftMost);
+            
+            // Update the max label based on label of expression tree.
+            maxLabel = curArgumentExpr->label > maxLabel ? curArgumentExpr->label : maxLabel;
+            curArgument = curArgument->next;
+        }
+        root->label = maxLabel;
+    }
+    else if(root->type == ARRAY_ACCESS){
+        assert(0);
+    }
+    else{
+        // Handle left child.
+        if(hasLeftLeaf(root)){
+            root->leftChild->label = 1;
+        }
+        else{
+            labelTree(root->leftChild, 1);
+        }
+        // Handle right child.
+        if(hasRightLeaf(root)){
+            root->rightChild->label = 0;
+        }
+        else{
+            labelTree(root->rightChild, 0);
+        }
+        
+        int leftChildLabel = root->leftChild->label;
+        int rightChildLabel = root->rightChild->label;
+        // Handle root.
+        if(leftChildLabel == rightChildLabel){
+            root->label = leftChildLabel+1;
+        }
+        else{
+            // TO-DO: make max function.
+            root->label = leftChildLabel > rightChildLabel ? leftChildLabel : rightChildLabel;
+        }
+    }
+}
+
 
 /*
     Outputs code to outFile for starting a procedure or 
@@ -291,116 +420,6 @@ void startSubprogram(FILE* outFile, tree_t* root, scope_t* topScope){
     fputs("\n", outFile);
 }
 
-
-/*
-    Generates the code for executing statements.
-*/
-void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
-    if(root == NULL){
-        return;
-    }
-    else if(root->type == PROCEDURE_CALL){
-        startSubprogram(outFile, root, topScope);
-    }
-    else if(root->type == IF){
-
-    }
-    else if(root->type == ASSIGNOP){
-        fprintf(stderr,"ASSIGNOP statement\n");
-        tree_t* exprTree = root->rightChild;
-        tree_t* varTree = root->leftChild;
-        assert(exprTree != NULL);
-        
-        // Setup expression tree for code generation.
-        labelTree(exprTree, 1);
-        genExpression(outFile, exprTree, topScope, 1);
-        // Expression return value is now in top register.
-        
-        // Check if the variable is an ID or array.
-        if(varTree->type == ID){
-            node_t* idNode = varTree->attribute.nval;
-            if(idNode->nodeType == FUNCTION){
-                // This sets up the "return" statement for functions.
-                genMovlCode(outFile, registerStack->registerName, "%esi");                
-            }
-            else{
-                // Sets the value of a variable. Could be in another scope (another stack frame).
-                assert(idNode->frameOffset != 0);
-                char strOffset[12];// Could be dangerous but rare for offset >12 characters.
-                getVarOffset(outFile, idNode, strOffset, topScope);
-                genMovlCode(outFile, registerStack->registerName, strOffset);
-            }
-        }
-        else{// varTree->type == ARRAY_ACCESS
-            assert(varTree->type == ARRAY_ACCESS);
-        }
-    }
-    else if(root->type == WHILE){
-        
-    }
-    else if(root->type == FOR){
-        
-    }
-    else if(root->type == WRITE){
-        fprintf(stderr, "WRITE statement\n");
-        tree_print(root);
-
-        tree_t* exprTree = root->leftChild;
-
-        assert(exprTree != NULL);
-        assert(exprTree->type != WRITE);
-        
-        labelTree(exprTree, 1);
-        tree_label_print(exprTree);
-
-        genExpression(outFile, exprTree, topScope, 1);
-        
-        fprintf(stderr, "Made it here2\n");
-
-        genPrintfCode(outFile, registerStack->registerName);
-    }
-    else if(root->type == READ){
-        fprintf(stderr,"READ statement\n");
-        tree_t* idTree = root->leftChild;
-        assert(idTree != NULL && idTree->type == ID);
-        char varLocation[12];
-        getVarOffset(outFile, idTree->attribute.nval, varLocation, topScope);
-        genReadCode(outFile, varLocation);
-    }
-    else{
-        fprintf(stderr, "root->type %d\n", root->type);
-        yyerror("root->type error in genStatement\n");
-    }
-}
-
-/*
-    Translates the value of the leaf into a string readable by x86 code.
-*/
-void getLeafString(FILE* outFile, tree_t* leaf, char* leafString, scope_t* topScope){
-    assert(leaf->label == 0 || leaf->label == 1);
-    if(leaf->type == INUM){
-        sprintf(leafString, "$%d", leaf->attribute.ival);
-    }
-    else if(leaf->type == RNUM){
-        assert(0);
-    }
-    else if(leaf->type == ID){
-        node_t* idNode = leaf->attribute.nval;
-        if(scope_search(topScope, idNode->name) != NULL){
-            // This variable is in the current scope.
-            getOffsetString(idNode->frameOffset, leafString, RBP);
-        }
-        else{
-            // This variable is in a different scope. Must start chasing.
-            getVarOffset(outFile, leaf->attribute.nval, leafString, topScope);
-        }
-    }
-    else{
-        fprintf(stderr, "%d\n", leaf->type);
-        assert(0);
-    }
-    return;
-}
 
 /*
     Prints the associated operator with operatorRoot to operatorString.
@@ -473,31 +492,6 @@ void writeOperatorCode(FILE* outFile, scope_t* topScope, tree_t* operatorRoot, c
     }  
 }
 
-void genCode(FILE* outFile, tree_t* root, scope_t* topScope){
-    assert(registerStack != NULL);
-    
-}
-
-void genPushqCode(FILE* outFile, char* locationToPush){
-    fputs("\tpushq\t", outFile);
-    fputs(locationToPush, outFile);
-    fputs("\n", outFile);
-}
-
-void pushAllRegisters(FILE* outFile){
-    genPushqCode(outFile, "%rdi");
-    genPushqCode(outFile, "%rcx");
-    genPushqCode(outFile, "%rbx");
-}
-
-void restoreAllRegisters(FILE* outFile){
-    genMovqCode(outFile, "0(%rsp)", "%rbx");
-    genMovqCode(outFile, "4(%rsp)", "%rcx");
-    genMovqCode(outFile, "8(%rsp)", "%rdi");
-    fputs("\taddq\t$12, %rsp\n", outFile);
-}
-
-
 /*
     Tree is assumed to be already labeled. This is the gen_code algorithm.
 */
@@ -505,7 +499,6 @@ void genExpression(FILE* outFile, tree_t* root, scope_t* topScope, short isLeftM
     // Leaf case.
     if(isLeaf(root)){
         fprintf(stderr, "CASE 0\n");
-        fprintf(stderr, "%d\n", registerStack);
 
         // Check for leftMost leaf.
         if(isLeftMost){
@@ -603,72 +596,82 @@ void genExpression(FILE* outFile, tree_t* root, scope_t* topScope, short isLeftM
     }
 }
 
+
 /*
-    Labels the expression tree to prepare it for 
-    genExpression (gen_code).
+    Generates the code for executing statements.
 */
-void labelTree(tree_t* root, short isLeftMost){
-    // For now, assume no functions or NOT.
+void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
     if(root == NULL){
-        assert(0);
         return;
     }
-    // Leaf case should only happen when no operators.
-    else if(isLeaf(root)){
-        fprintf(stderr, "%d\n", root->type);
-        root->label = 1;
-        return;
+    else if(root->type == PROCEDURE_CALL){
+        startSubprogram(outFile, root, topScope);
     }
-    // NOT case should make current node have child's label
-    else if(root->type == NOT){
-        labelTree(root->leftChild, 1);
-        root->label = root->leftChild->label;
-        return;
+    else if(root->type == IF){
+
     }
-    // For function call, label is the max label of the expression arguments. 
-    else if(root->type == FUNCTION_CALL){
-        // Retrieve the argument list for this function.
-        TreeList* curArgument = root->rightChild->attribute.listVal;
-        int maxLabel = isLeftMost;
-        while(curArgument != NULL){
-            // Retrieve the expression tree from this argument.
-            tree_t* curArgumentExpr = curArgument->statementTree;
-            labelTree(curArgumentExpr, isLeftMost);
-            
-            // Update the max label based on label of expression tree.
-            maxLabel = curArgumentExpr->label > maxLabel ? curArgumentExpr->label : maxLabel;
-            curArgument = curArgument->next;
+    else if(root->type == ASSIGNOP){
+        fprintf(stderr,"ASSIGNOP statement\n");
+        tree_t* exprTree = root->rightChild;
+        tree_t* varTree = root->leftChild;
+        assert(varTree != NULL && exprTree != NULL);
+        
+        // Setup expression tree for code generation.
+        labelTree(exprTree, 1);
+        genExpression(outFile, exprTree, topScope, 1);
+        // Expression return value is now in top register.
+        
+        // Check if the variable is an ID or array.
+        if(varTree->type == ID){
+            node_t* idNode = varTree->attribute.nval;
+            if(idNode->nodeType == FUNCTION){
+                // This sets up the "return" statement for functions.
+                genMovlCode(outFile, registerStack->registerName, "%esi");                
+            }
+            else{
+                // Sets the value of a variable. Could be in another scope (another stack frame).
+                assert(idNode->frameOffset != 0);
+                char strOffset[12];// Could be dangerous but rare for offset >12 characters.
+                getVarOffset(outFile, idNode, strOffset, topScope);
+                genMovlCode(outFile, registerStack->registerName, strOffset);
+            }
         }
-        root->label = maxLabel;
+        else{// varTree->type == ARRAY_ACCESS
+            assert(varTree->type == ARRAY_ACCESS);
+        }
     }
-    else if(root->type == ARRAY_ACCESS){
-        assert(0);
+    else if(root->type == WHILE){
+        
+    }
+    else if(root->type == FOR){
+        
+    }
+    else if(root->type == WRITE){
+        fprintf(stderr, "WRITE statement\n");
+        tree_print(root);
+
+        tree_t* exprTree = root->leftChild;
+
+        assert(exprTree != NULL);
+        assert(exprTree->type != WRITE);
+        
+        // Setup expression tree for code generation.
+        labelTree(exprTree, 1);
+        // Execute code generation.
+        genExpression(outFile, exprTree, topScope, 1);
+        // Value to print is now in the top register.
+        genPrintfCode(outFile, registerStack->registerName);
+    }
+    else if(root->type == READ){
+        fprintf(stderr,"READ statement\n");
+        tree_t* idTree = root->leftChild;
+        assert(idTree != NULL && idTree->type == ID);
+        char varLocation[12];
+        getVarOffset(outFile, idTree->attribute.nval, varLocation, topScope);
+        genReadCode(outFile, varLocation);
     }
     else{
-        // Handle left child.
-        if(hasLeftLeaf(root)){
-            root->leftChild->label = 1;
-        }
-        else{
-            labelTree(root->leftChild, 1);
-        }
-        // Handle right child.
-        if(hasRightLeaf(root)){
-            root->rightChild->label = 0;
-        }
-        else{
-            labelTree(root->rightChild, 0);
-        }
-        
-        int leftChildLabel = root->leftChild->label;
-        int rightChildLabel = root->rightChild->label;
-        // Handle root.
-        if(leftChildLabel == rightChildLabel){
-            root->label = leftChildLabel+1;
-        }
-        else{
-            // TO-DO: make max function.
-            root->label = leftChildLabel > rightChildLabel ? leftChildLabel : rightChildLabel;
-        }
+        fprintf(stderr, "root->type %d\n", root->type);
+        yyerror("root->type error in genStatement\n");
     }
 }

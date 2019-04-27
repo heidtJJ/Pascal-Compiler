@@ -2,13 +2,14 @@ program boo( input, output );
 	var x: integer;
 	
 	procedure foo(a: integer);
-		procedure coo(a: integer);
+		var x: integer;
+		function coo(a: integer; x: integer) : integer;
 			begin
 				write(x);
-				x := 1;
+				coo := 12;
 			end;
 		begin
-			coo(1);
+			x := coo(1, 2);
 			write(x);
 			x := 2;
 		end;

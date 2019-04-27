@@ -17,7 +17,6 @@
     extern int yylex();
 
     scope_t* top_scope = NULL;
-    scope_t* takenIds = NULL;
     
     FILE* outFile;
 
@@ -173,11 +172,6 @@ declarations /* Purely for defining variables. Variable cannot have same name as
                         yyerror("Variable is redeclared with same name as owning subprogram name in identifier_list\n");
                     }
                 }
-                /* Check if variable name is one of the reserved identifiers */
-                if(scope_search(takenIds, name) != NULL){
-                    yyerror("Variable has an illegal named reserved by Pascal.\n");
-                }
-
                 copyNode(typeNode, curId);/* Does not affect *next attribute. Does affect ->name. */
                 curId->name = name;
                 node_t* copy = insertVarNode(NULL, NOT_SET, name);
@@ -267,11 +261,6 @@ subprogram_head
                 /* Function with same name is redeclared in the same scope */
                 yyerror("Function redeclared in the same scope\n");
             }
-            /* Check if variable name is one of the reserved identifiers */
-            if(scope_search(takenIds, $2) != NULL){
-                yyerror("Function has an illegal named reserved by Pascal.\n");
-            }
-
             node_t* functionNode = scope_insert_function(top_scope, 0, $2, NULL);
             top_scope = push_scope(top_scope, functionNode);  
         } 
@@ -292,10 +281,6 @@ subprogram_head
             if(scope_search(top_scope, $2) != NULL){
                 /* Procedure with same name is redeclared in the same scope */
                 yyerror("Procedure redeclared in the same scope\n");
-            }
-            /* Check if variable name is one of the reserved identifiers */
-            if(scope_search(takenIds, $2) != NULL){
-                yyerror("Procedure has an illegal named reserved by Pascal.\n");
             }
             node_t* procedureNode = scope_insert_procedure(top_scope, $2, NULL);
             top_scope = push_scope(top_scope, procedureNode);  
@@ -391,6 +376,7 @@ parameter_list
 compound_statement
     : BBEGIN optional_statements END 
         { 
+            /* Do semantic checking on statements. */
             if(top_scope == NULL){
                 yyerror("Invalid scope in subprogram_declaration\n");
             }
@@ -411,6 +397,7 @@ compound_statement
             top_scope->tempsAddress = addVariableToScope(top_scope, sizeof(int));
             addVariableToScope(top_scope, sizeof(int));
             
+            /* Do code generation */
             genCodePrintProcBegin(outFile, top_scope);
 
             TreeList* curStmt = statementList;
@@ -444,7 +431,7 @@ compound_statement
                 scopeOwner->data.procedureInfo.hasSideEffects = containsSideEffects;
             }        
 
-            genCodePrintProcEnd(outFile, top_scope->scopeOwner->name);
+            genCodePrintProcEnd(outFile, top_scope->scopeName);
             $$ = mkinum(containsSideEffects);
 
             fprintf(stderr, "RETURNING SIDE EFFECT %d %d\n\n", containsSideEffects, flags);
@@ -653,9 +640,5 @@ factor
 %%
 
 int main(){
-    takenIds = push_scope(NULL, NULL);
-    scope_insert_procedure(takenIds, "read", NULL);
-    scope_insert_procedure(takenIds, "write", NULL);
-
     yyparse();
 }

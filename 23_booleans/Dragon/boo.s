@@ -14,11 +14,29 @@ boo:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	subq	$32, %rsp # lowering the stack pointer.
-	movl	$0, %ebx
-	addl	$0, %ebx
+	movl	$6, %ebx
+	movl	%ebx, -12(%rbp)
+	movl	$1, %ebx
+	movl	%ebx, -8(%rbp)
+	jmp	.L1
+.L0:
+	movl	-8(%rbp), %ebx
+	addl	$1, %ebx
 
 	movl	%ebx, -8(%rbp)
+	movl	-12(%rbp), %ebx
+	addl	$1, %ebx
+
+	movl	%ebx, -12(%rbp)
+.L1:
 	movl	-8(%rbp), %ebx
+	cmpl	$4, %ebx
+	setle	%al
+	movzbl	%al, %ebx
+
+	cmpl	$1, %ebx
+	je	.L0
+	movl	-12(%rbp), %ebx
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax

@@ -7,14 +7,18 @@ typedef struct RegisterStack_ {
     struct RegisterStack_* next;
 } RegisterStack;
 
-/* Push function */
+/* Push function. */
 RegisterStack* pushRegisterStr(RegisterStack* top, char* registerName);
 RegisterStack* pushRegister(RegisterStack* top, RegisterStack* newTop);
-/* Pop function */
+/* Pop function. */
 RegisterStack* popRegister(RegisterStack** top);
-/* Free stack */
+/* Free stack. */
 void freeRegisterStack(RegisterStack* top);
-/* Swap top two elements on stack */
+/* Swap top two elements on stack. */
 RegisterStack* swapRegisterStack(RegisterStack* top);
+/* Reverse the order of a stack. */
+RegisterStack* reverseRegisterStack(RegisterStack* top);
+/* Print the contents of the register stack to stderr. */
+void printRegisterStack(RegisterStack* top);
 
 #endif

@@ -53,10 +53,6 @@ tree_t* mktreeList( TreeList* treeList){
     return p;
 }
 
-void tree_label_print(tree_t* root){
-    aux_label_print( root, 0 );
-}
-
 void aux_label_print( tree_t* root, int spaces){
      if(root == NULL) return;
 
@@ -179,6 +175,10 @@ void tree_free(tree_t* root){
         tree_free(root->rightChild);
     }
     free(root);
+}
+
+void tree_label_print(tree_t* root){
+    aux_label_print( root, 0 );
 }
 
 int isLeaf(tree_t* root){

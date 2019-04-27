@@ -82,7 +82,6 @@
     extern int yylex();
 
     scope_t* top_scope = NULL;
-    scope_t* takenIds = NULL;
     
     FILE* outFile;
 
@@ -90,7 +89,7 @@
     unsigned int NO_SIDE_EFFECTS = 0x2;
 
 
-#line 94 "y.tab.c" /* yacc.c:339  */
+#line 93 "y.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -234,7 +233,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 29 "pc.y" /* yacc.c:355  */
+#line 28 "pc.y" /* yacc.c:355  */
 
     // This is yylval
     int ival; /* NUM */
@@ -246,7 +245,7 @@ union YYSTYPE
     node_t* nval;
     TreeList* treeListVal;
 
-#line 250 "y.tab.c" /* yacc.c:355  */
+#line 249 "y.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -263,7 +262,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 267 "y.tab.c" /* yacc.c:358  */
+#line 266 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -565,13 +564,13 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   106,   106,   111,   124,   106,   142,   146,   154,   197,
-     205,   209,   216,   217,   221,   225,   233,   265,   264,   291,
-     290,   317,   341,   349,   365,   392,   455,   459,   463,   468,
-     475,   476,   480,   482,   486,   488,   490,   492,   503,   507,
-     514,   516,   521,   539,   554,   566,   586,   591,   603,   607,
-     611,   615,   619,   626,   628,   633,   646,   647,   648,   649,
-     650
+       0,   105,   105,   110,   123,   105,   141,   145,   153,   191,
+     199,   203,   210,   211,   215,   219,   227,   259,   258,   280,
+     279,   302,   326,   334,   350,   377,   442,   446,   450,   455,
+     462,   463,   467,   469,   473,   475,   477,   479,   490,   494,
+     501,   503,   508,   526,   541,   553,   573,   578,   590,   594,
+     598,   602,   606,   613,   615,   620,   633,   634,   635,   636,
+     637
 };
 #endif
 
@@ -1442,16 +1441,16 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 106 "pc.y" /* yacc.c:1646  */
+#line 105 "pc.y" /* yacc.c:1646  */
     {
         setupRegisterStack();
         fprintf(stderr, "BEGINING OF PROGRAM\n"); 
     }
-#line 1451 "y.tab.c" /* yacc.c:1646  */
+#line 1450 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 111 "pc.y" /* yacc.c:1646  */
+#line 110 "pc.y" /* yacc.c:1646  */
     {
         char* fileName = getFileName((yyvsp[0].sval));
         fprintf(stderr, "fileName %s\n", fileName);
@@ -1464,19 +1463,19 @@ yyreduce:
         node_t* programNode = insertProcedureNode(NULL, (yyvsp[0].sval), NULL);
         top_scope = push_scope(NULL, programNode);
     }
-#line 1468 "y.tab.c" /* yacc.c:1646  */
+#line 1467 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 124 "pc.y" /* yacc.c:1646  */
+#line 123 "pc.y" /* yacc.c:1646  */
     {
         top_scope->scopeOwner->data.procedureInfo.arguments = NULL;
     }
-#line 1476 "y.tab.c" /* yacc.c:1646  */
+#line 1475 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 131 "pc.y" /* yacc.c:1646  */
+#line 130 "pc.y" /* yacc.c:1646  */
     { 
         free_scope(top_scope);
         fprintf(stderr, "END OF PROGRAM\n"); 
@@ -1485,28 +1484,28 @@ yyreduce:
         fclose(outFile);
         freeRegisters();
     }
-#line 1489 "y.tab.c" /* yacc.c:1646  */
+#line 1488 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 143 "pc.y" /* yacc.c:1646  */
+#line 142 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.nval) = insertVarNode(NULL, NOT_SET, (yyvsp[0].sval));
     }
-#line 1497 "y.tab.c" /* yacc.c:1646  */
+#line 1496 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 147 "pc.y" /* yacc.c:1646  */
+#line 146 "pc.y" /* yacc.c:1646  */
     { 
         node_t* newTop = insertVarNode((yyvsp[0].nval), NOT_SET, (yyvsp[-2].sval)); 
         (yyval.nval) = newTop;
     }
-#line 1506 "y.tab.c" /* yacc.c:1646  */
+#line 1505 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 155 "pc.y" /* yacc.c:1646  */
+#line 154 "pc.y" /* yacc.c:1646  */
     {
             node_t* idListHead = (yyvsp[-3].nval);
             node_t* curId = idListHead;
@@ -1528,11 +1527,6 @@ yyreduce:
                         yyerror("Variable is redeclared with same name as owning subprogram name in identifier_list\n");
                     }
                 }
-                /* Check if variable name is one of the reserved identifiers */
-                if(scope_search(takenIds, name) != NULL){
-                    yyerror("Variable has an illegal named reserved by Pascal.\n");
-                }
-
                 copyNode(typeNode, curId);/* Does not affect *next attribute. Does affect ->name. */
                 curId->name = name;
                 node_t* copy = insertVarNode(NULL, NOT_SET, name);
@@ -1549,53 +1543,53 @@ yyreduce:
             scope_print(top_scope);
             free_list(typeNode);
         }
-#line 1553 "y.tab.c" /* yacc.c:1646  */
+#line 1547 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 206 "pc.y" /* yacc.c:1646  */
+#line 200 "pc.y" /* yacc.c:1646  */
     {
         (yyval.nval) = insertVarNode(NULL, (yyvsp[0].ival), NULL);
     }
-#line 1561 "y.tab.c" /* yacc.c:1646  */
+#line 1555 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 210 "pc.y" /* yacc.c:1646  */
+#line 204 "pc.y" /* yacc.c:1646  */
     {
         (yyval.nval) = insertArrayNode(NULL, (yyvsp[0].ival), NULL, (yyvsp[-5].ival), (yyvsp[-3].ival));
     }
-#line 1569 "y.tab.c" /* yacc.c:1646  */
+#line 1563 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 216 "pc.y" /* yacc.c:1646  */
+#line 210 "pc.y" /* yacc.c:1646  */
     { (yyval.ival) = INTEGER; }
-#line 1575 "y.tab.c" /* yacc.c:1646  */
+#line 1569 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 217 "pc.y" /* yacc.c:1646  */
+#line 211 "pc.y" /* yacc.c:1646  */
     { (yyval.ival) = REAL; }
-#line 1581 "y.tab.c" /* yacc.c:1646  */
+#line 1575 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 222 "pc.y" /* yacc.c:1646  */
+#line 216 "pc.y" /* yacc.c:1646  */
     {
         (yyval.ival) = (yyvsp[-2].ival) || (yyvsp[-1].ival);
     }
-#line 1589 "y.tab.c" /* yacc.c:1646  */
+#line 1583 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 225 "pc.y" /* yacc.c:1646  */
+#line 219 "pc.y" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 1595 "y.tab.c" /* yacc.c:1646  */
+#line 1589 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 234 "pc.y" /* yacc.c:1646  */
+#line 228 "pc.y" /* yacc.c:1646  */
     {
         tree_t* cpmdStatement = (yyvsp[0].tval);
         unsigned int subContainsSideEffects = (yyvsp[-1].ival);
@@ -1623,29 +1617,24 @@ yyreduce:
             tree_free(cpmdStatement);
         }
     }
-#line 1627 "y.tab.c" /* yacc.c:1646  */
+#line 1621 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 265 "pc.y" /* yacc.c:1646  */
+#line 259 "pc.y" /* yacc.c:1646  */
     {   
             if(scope_search(top_scope, (yyvsp[0].sval)) != NULL){
                 /* Function with same name is redeclared in the same scope */
                 yyerror("Function redeclared in the same scope\n");
             }
-            /* Check if variable name is one of the reserved identifiers */
-            if(scope_search(takenIds, (yyvsp[0].sval)) != NULL){
-                yyerror("Function has an illegal named reserved by Pascal.\n");
-            }
-
             node_t* functionNode = scope_insert_function(top_scope, 0, (yyvsp[0].sval), NULL);
             top_scope = push_scope(top_scope, functionNode);  
         }
-#line 1645 "y.tab.c" /* yacc.c:1646  */
+#line 1634 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 279 "pc.y" /* yacc.c:1646  */
+#line 268 "pc.y" /* yacc.c:1646  */
     {
             /* Set the return type and argument types of the node */
             node_t* functionNode = top_scope->scopeOwner;
@@ -1657,28 +1646,24 @@ yyreduce:
             functionNode->data.functionInfo.arguments = (yyvsp[-3].nval);
             (yyval.nval) = functionNode;
         }
-#line 1661 "y.tab.c" /* yacc.c:1646  */
+#line 1650 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 291 "pc.y" /* yacc.c:1646  */
+#line 280 "pc.y" /* yacc.c:1646  */
     { 
             if(scope_search(top_scope, (yyvsp[0].sval)) != NULL){
                 /* Procedure with same name is redeclared in the same scope */
                 yyerror("Procedure redeclared in the same scope\n");
             }
-            /* Check if variable name is one of the reserved identifiers */
-            if(scope_search(takenIds, (yyvsp[0].sval)) != NULL){
-                yyerror("Procedure has an illegal named reserved by Pascal.\n");
-            }
             node_t* procedureNode = scope_insert_procedure(top_scope, (yyvsp[0].sval), NULL);
             top_scope = push_scope(top_scope, procedureNode);  
         }
-#line 1678 "y.tab.c" /* yacc.c:1646  */
+#line 1663 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 304 "pc.y" /* yacc.c:1646  */
+#line 289 "pc.y" /* yacc.c:1646  */
     {
             /* Set the return type and argument types of the node */
             node_t* procedureNode = top_scope->scopeOwner;;
@@ -1689,11 +1674,11 @@ yyreduce:
             procedureNode->data.procedureInfo.arguments = (yyvsp[-1].nval);
             (yyval.nval) = procedureNode;
         }
-#line 1693 "y.tab.c" /* yacc.c:1646  */
+#line 1678 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 318 "pc.y" /* yacc.c:1646  */
+#line 303 "pc.y" /* yacc.c:1646  */
     { 
             node_t* cur = (yyvsp[-1].nval);
             fprintf(stderr, "\nFUFUFUSADJDSFSADJJDASJFDSAJJFSADAFD111\n");
@@ -1717,17 +1702,17 @@ yyreduce:
             (yyval.nval) = (yyvsp[-1].nval);
             print_list((yyvsp[-1].nval));
         }
-#line 1721 "y.tab.c" /* yacc.c:1646  */
+#line 1706 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 341 "pc.y" /* yacc.c:1646  */
+#line 326 "pc.y" /* yacc.c:1646  */
     { (yyval.nval) = NULL; }
-#line 1727 "y.tab.c" /* yacc.c:1646  */
+#line 1712 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 350 "pc.y" /* yacc.c:1646  */
+#line 335 "pc.y" /* yacc.c:1646  */
     {
         node_t* idList = (yyvsp[-2].nval);
         node_t* cur = idList;
@@ -1743,11 +1728,11 @@ yyreduce:
         print_list(idList);
 
     }
-#line 1747 "y.tab.c" /* yacc.c:1646  */
+#line 1732 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 366 "pc.y" /* yacc.c:1646  */
+#line 351 "pc.y" /* yacc.c:1646  */
     {
         node_t* typeNode = (yyvsp[-2].nval);
         node_t* idList = (yyvsp[-4].nval);
@@ -1771,12 +1756,13 @@ yyreduce:
         (yyval.nval) = idList;
         print_list(idList);
     }
-#line 1775 "y.tab.c" /* yacc.c:1646  */
+#line 1760 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 393 "pc.y" /* yacc.c:1646  */
+#line 378 "pc.y" /* yacc.c:1646  */
     { 
+            /* Do semantic checking on statements. */
             if(top_scope == NULL){
                 yyerror("Invalid scope in subprogram_declaration\n");
             }
@@ -1797,6 +1783,7 @@ yyreduce:
             top_scope->tempsAddress = addVariableToScope(top_scope, sizeof(int));
             addVariableToScope(top_scope, sizeof(int));
             
+            /* Do code generation */
             genCodePrintProcBegin(outFile, top_scope);
 
             TreeList* curStmt = statementList;
@@ -1830,91 +1817,91 @@ yyreduce:
                 scopeOwner->data.procedureInfo.hasSideEffects = containsSideEffects;
             }        
 
-            genCodePrintProcEnd(outFile, top_scope->scopeOwner->name);
+            genCodePrintProcEnd(outFile, top_scope->scopeName);
             (yyval.tval) = mkinum(containsSideEffects);
 
             fprintf(stderr, "RETURNING SIDE EFFECT %d %d\n\n", containsSideEffects, flags);
         }
-#line 1839 "y.tab.c" /* yacc.c:1646  */
+#line 1826 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 456 "pc.y" /* yacc.c:1646  */
+#line 443 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.treeListVal) = (yyvsp[0].treeListVal); 
     }
-#line 1847 "y.tab.c" /* yacc.c:1646  */
+#line 1834 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 459 "pc.y" /* yacc.c:1646  */
+#line 446 "pc.y" /* yacc.c:1646  */
     { (yyval.treeListVal) = NULL; }
-#line 1853 "y.tab.c" /* yacc.c:1646  */
+#line 1840 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 464 "pc.y" /* yacc.c:1646  */
+#line 451 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.treeListVal) = insertTree(NULL, (yyvsp[0].tval));
  
     }
-#line 1862 "y.tab.c" /* yacc.c:1646  */
+#line 1849 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 469 "pc.y" /* yacc.c:1646  */
+#line 456 "pc.y" /* yacc.c:1646  */
     {
         (yyval.treeListVal) = insertTree((yyvsp[0].treeListVal), (yyvsp[-2].tval)); 
     }
-#line 1870 "y.tab.c" /* yacc.c:1646  */
+#line 1857 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 475 "pc.y" /* yacc.c:1646  */
+#line 462 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[0].tval); }
-#line 1876 "y.tab.c" /* yacc.c:1646  */
+#line 1863 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 476 "pc.y" /* yacc.c:1646  */
+#line 463 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[0].tval); }
-#line 1882 "y.tab.c" /* yacc.c:1646  */
+#line 1869 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 481 "pc.y" /* yacc.c:1646  */
+#line 468 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mktree(IF, (yyvsp[-4].tval), mktree(THEN, (yyvsp[-2].tval), (yyvsp[0].tval))); }
-#line 1888 "y.tab.c" /* yacc.c:1646  */
+#line 1875 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 483 "pc.y" /* yacc.c:1646  */
+#line 470 "pc.y" /* yacc.c:1646  */
     {  
             (yyval.tval) = mktree(ASSIGNOP, (yyvsp[-2].tval), (yyvsp[0].tval));
         }
-#line 1896 "y.tab.c" /* yacc.c:1646  */
+#line 1883 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 487 "pc.y" /* yacc.c:1646  */
+#line 474 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[0].tval); }
-#line 1902 "y.tab.c" /* yacc.c:1646  */
+#line 1889 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 489 "pc.y" /* yacc.c:1646  */
+#line 476 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[0].tval); }
-#line 1908 "y.tab.c" /* yacc.c:1646  */
+#line 1895 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 491 "pc.y" /* yacc.c:1646  */
+#line 478 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mktree(WHILE, (yyvsp[-2].tval), (yyvsp[0].tval)); }
-#line 1914 "y.tab.c" /* yacc.c:1646  */
+#line 1901 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 493 "pc.y" /* yacc.c:1646  */
+#line 480 "pc.y" /* yacc.c:1646  */
     { 
             int variableType = getExpressionType(top_scope, (yyvsp[-6].tval));
             int expression1 = getExpressionType(top_scope, (yyvsp[-4].tval));
@@ -1925,39 +1912,39 @@ yyreduce:
             (yyval.tval) = mktree(FOR, mktree(ASSIGNOP, (yyvsp[-6].tval), (yyvsp[-4].tval)), mktree(TO, (yyvsp[-2].tval), mktree(DO, (yyvsp[0].tval), NULL))); 
 
         }
-#line 1929 "y.tab.c" /* yacc.c:1646  */
+#line 1916 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 504 "pc.y" /* yacc.c:1646  */
+#line 491 "pc.y" /* yacc.c:1646  */
     { 
             (yyval.tval) = mktree(WRITE, (yyvsp[-1].tval), NULL); 
         }
-#line 1937 "y.tab.c" /* yacc.c:1646  */
+#line 1924 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 508 "pc.y" /* yacc.c:1646  */
+#line 495 "pc.y" /* yacc.c:1646  */
     {
         (yyval.tval) = mktree(READ, (yyvsp[-1].tval), NULL);
     }
-#line 1945 "y.tab.c" /* yacc.c:1646  */
+#line 1932 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 515 "pc.y" /* yacc.c:1646  */
+#line 502 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mktree(IF, (yyvsp[-2].tval), mktree(THEN, (yyvsp[0].tval), NULL)); }
-#line 1951 "y.tab.c" /* yacc.c:1646  */
+#line 1938 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 517 "pc.y" /* yacc.c:1646  */
+#line 504 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mktree(IF, (yyvsp[-4].tval), mktree(THEN, (yyvsp[-2].tval), (yyvsp[0].tval))); }
-#line 1957 "y.tab.c" /* yacc.c:1646  */
+#line 1944 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 522 "pc.y" /* yacc.c:1646  */
+#line 509 "pc.y" /* yacc.c:1646  */
     {
         node_t* varNode = scope_search_all(top_scope, (yyvsp[0].sval));
         if(!varNode){
@@ -1975,11 +1962,11 @@ yyreduce:
         }
         (yyval.tval) = mkid(varNode); 
     }
-#line 1979 "y.tab.c" /* yacc.c:1646  */
+#line 1966 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 540 "pc.y" /* yacc.c:1646  */
+#line 527 "pc.y" /* yacc.c:1646  */
     { 
         node_t* arrayNode = scope_search_all(top_scope, (yyvsp[-3].sval));
         if(!arrayNode || arrayNode->nodeType != VAR){
@@ -1991,11 +1978,11 @@ yyreduce:
         }
         (yyval.tval) = mktree(ARRAY_ACCESS, mkid(arrayNode), (yyvsp[-1].tval));
     }
-#line 1995 "y.tab.c" /* yacc.c:1646  */
+#line 1982 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 555 "pc.y" /* yacc.c:1646  */
+#line 542 "pc.y" /* yacc.c:1646  */
     { 
         node_t* procedureNode = scope_search_all(top_scope, (yyvsp[0].sval));
         if(procedureNode == NULL){
@@ -2007,11 +1994,11 @@ yyreduce:
         }
         (yyval.tval) = mktree(PROCEDURE_CALL, mkid(procedureNode), NULL); 
     }
-#line 2011 "y.tab.c" /* yacc.c:1646  */
+#line 1998 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 567 "pc.y" /* yacc.c:1646  */
+#line 554 "pc.y" /* yacc.c:1646  */
     { 
         node_t* procedureNode = scope_search_all(top_scope, (yyvsp[-3].sval));
         if(procedureNode == NULL){
@@ -2028,20 +2015,20 @@ yyreduce:
 
         (yyval.tval) = mktree(PROCEDURE_CALL, mkid(procedureNode), mktreeList((yyvsp[-1].treeListVal))); 
     }
-#line 2032 "y.tab.c" /* yacc.c:1646  */
+#line 2019 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 587 "pc.y" /* yacc.c:1646  */
+#line 574 "pc.y" /* yacc.c:1646  */
     { 
         /*int expressionType = getExpressionType(top_scope, $1);*/
         (yyval.treeListVal) = insertTree(NULL, (yyvsp[0].tval)); 
     }
-#line 2041 "y.tab.c" /* yacc.c:1646  */
+#line 2028 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 592 "pc.y" /* yacc.c:1646  */
+#line 579 "pc.y" /* yacc.c:1646  */
     {
         /*int expressionType = getExpressionType(top_scope, $1);*/
         
@@ -2050,61 +2037,61 @@ yyreduce:
         (yyval.treeListVal) = insertTree((yyvsp[0].treeListVal), (yyvsp[-2].tval)); 
         /*fprintf(stderr, "AFTER insertVarNode %d\n", $$);*/
     }
-#line 2054 "y.tab.c" /* yacc.c:1646  */
+#line 2041 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 604 "pc.y" /* yacc.c:1646  */
+#line 591 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.tval) = (yyvsp[0].tval); 
     }
-#line 2062 "y.tab.c" /* yacc.c:1646  */
+#line 2049 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 607 "pc.y" /* yacc.c:1646  */
+#line 594 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mkop(RELOP, (yyvsp[-1].opval), (yyvsp[-2].tval), (yyvsp[0].tval)); }
-#line 2068 "y.tab.c" /* yacc.c:1646  */
+#line 2055 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 612 "pc.y" /* yacc.c:1646  */
+#line 599 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.tval) = (yyvsp[0].tval); 
     }
-#line 2076 "y.tab.c" /* yacc.c:1646  */
+#line 2063 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 616 "pc.y" /* yacc.c:1646  */
+#line 603 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.tval) = mkop(ADDOP, (yyvsp[-1].opval), (yyvsp[0].tval), NULL); 
     }
-#line 2084 "y.tab.c" /* yacc.c:1646  */
+#line 2071 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 620 "pc.y" /* yacc.c:1646  */
+#line 607 "pc.y" /* yacc.c:1646  */
     { 
         (yyval.tval) = mkop(ADDOP, (yyvsp[-1].opval), (yyvsp[-2].tval), (yyvsp[0].tval)); 
     }
-#line 2092 "y.tab.c" /* yacc.c:1646  */
+#line 2079 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 627 "pc.y" /* yacc.c:1646  */
+#line 614 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[0].tval); }
-#line 2098 "y.tab.c" /* yacc.c:1646  */
+#line 2085 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 629 "pc.y" /* yacc.c:1646  */
+#line 616 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mkop(MULOP, (yyvsp[-1].opval), (yyvsp[-2].tval), (yyvsp[0].tval)); }
-#line 2104 "y.tab.c" /* yacc.c:1646  */
+#line 2091 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 634 "pc.y" /* yacc.c:1646  */
+#line 621 "pc.y" /* yacc.c:1646  */
     { 
         node_t* matchNode = scope_search_all(top_scope, (yyvsp[-3].sval));
         if(matchNode == NULL || matchNode->nodeType != FUNCTION){
@@ -2117,41 +2104,41 @@ yyreduce:
 
         (yyval.tval) = mktree(FUNCTION_CALL, mkid(matchNode), mktreeList((yyvsp[-1].treeListVal))); 
     }
-#line 2121 "y.tab.c" /* yacc.c:1646  */
+#line 2108 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 646 "pc.y" /* yacc.c:1646  */
+#line 633 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[0].tval); }
-#line 2127 "y.tab.c" /* yacc.c:1646  */
+#line 2114 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 647 "pc.y" /* yacc.c:1646  */
+#line 634 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mkinum((yyvsp[0].ival)); }
-#line 2133 "y.tab.c" /* yacc.c:1646  */
+#line 2120 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 648 "pc.y" /* yacc.c:1646  */
+#line 635 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mkrnum((yyvsp[0].rval)); }
-#line 2139 "y.tab.c" /* yacc.c:1646  */
+#line 2126 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 649 "pc.y" /* yacc.c:1646  */
+#line 636 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = (yyvsp[-1].tval); }
-#line 2145 "y.tab.c" /* yacc.c:1646  */
+#line 2132 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 650 "pc.y" /* yacc.c:1646  */
+#line 637 "pc.y" /* yacc.c:1646  */
     { (yyval.tval) = mktree(NOT, (yyvsp[0].tval), NULL); }
-#line 2151 "y.tab.c" /* yacc.c:1646  */
+#line 2138 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 2155 "y.tab.c" /* yacc.c:1646  */
+#line 2142 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2379,13 +2366,9 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 653 "pc.y" /* yacc.c:1906  */
+#line 640 "pc.y" /* yacc.c:1906  */
 
 
 int main(){
-    takenIds = push_scope(NULL, NULL);
-    scope_insert_procedure(takenIds, "read", NULL);
-    scope_insert_procedure(takenIds, "write", NULL);
-
     yyparse();
 }

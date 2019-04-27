@@ -10,65 +10,73 @@
 	.text
 	.globl	main
 	.type	main, @function
-foo:
+boo_foo_coo:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	subq	$32, %rsp # lowering the stack pointer.
-	movl	16(%rbp), %eax
-	movl	%eax, -8(%rbp)
-	movl	20(%rbp), %eax
-	movl	%eax, -12(%rbp)
-	movl	-8(%rbp), %ebx
-
-	imull	$10, %ebx
-
-	movl	%ebx, %esi
-	movl	$4, %ebx
-	movl	%ebx, -12(%rbp)
-	movl	-12(%rbp), %ebx
-	movl	%ebx, %esi
-	leave
-	ret
-.foo:
-	.size	foo, .-foo
-	.globl	main
-	.type	main, @function
-coo:
-	pushq	%rbp
-	movq	%rsp, %rbp
-	subq	$32, %rsp # lowering the stack pointer.
-	movl	$22, %ebx
-	movl	%ebx, -8(%rbp)
-	movl	-8(%rbp), %ebx
+	movq	%rbp, %rax
+	movq	(%rax), %rax
+	movq	(%rax), %rax
+	movl	-8(%rax), %ebx
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
+	movl	$1, %ebx
+	movq	%rbp, %rax
+	movq	(%rax), %rax
+	movq	(%rax), %rax
+	movl	%ebx, -8(%rax)
 	leave
 	ret
-.coo:
-	.size	coo, .-coo
+.boo_foo_coo:
+	.size	boo_foo_coo, .-boo_foo_coo
+	.globl	main
+	.type	main, @function
+boo_foo:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$32, %rsp # lowering the stack pointer.
+	movl	$1, %ebx
+	movl	%ebx, %eax
+	movl	%eax, -32(%rbp)
+	movl	$0, %esi
+	call	boo_foo_coo
+	movq	%rbp, %rax
+	movq	(%rax), %rax
+	movl	-8(%rax), %ebx
+	movl	%ebx, %esi
+	leaq	.LC0(%rip), %rdi
+	movl	$0, %eax
+	call	printf
+	movl	$2, %ebx
+	movq	%rbp, %rax
+	movq	(%rax), %rax
+	movl	%ebx, -8(%rax)
+	leave
+	ret
+.boo_foo:
+	.size	boo_foo, .-boo_foo
 	.globl	main
 	.type	main, @function
 boo:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	subq	$32, %rsp # lowering the stack pointer.
-	leaq	-8(%rbp), %rax
-	movq	%rax, %rsi
-	leaq	.LC1(%rip), %rdi
-	movl	$0, %eax
-	call	__isoc99_scanf@PLT
+	movl	$22, %ebx
+	movl	%ebx, -8(%rbp)
+	movl	$1, %ebx
+	movl	%ebx, %eax
+	movl	%eax, -32(%rbp)
+	movl	$0, %esi
+	call	boo_foo
 	movl	-8(%rbp), %ebx
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
-	movl	$1, %ebx
-	movl	%ebx, %eax
-	movl	%eax, -32(%rbp)
-	movl	$0, %esi
-	call	coo
+	movl	$3, %ebx
+	movl	%ebx, -8(%rbp)
 	movl	-8(%rbp), %ebx
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi

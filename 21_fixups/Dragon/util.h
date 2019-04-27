@@ -13,6 +13,7 @@ node_t* convertToNameList(tree_t* parameterTree);
 void findMaxNumArguments(TreeList* statementList, int* maxNumArguments);
 int hasSideEffects(int flags);
 int hasNoReturnStmt(int flags);
+void print_spaces(int num_spaces);
 
 int max(int a, int b);
 /*node_t* copyArguments(node_t* oldArgs);*/

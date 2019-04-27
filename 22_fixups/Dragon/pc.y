@@ -298,7 +298,6 @@ arguments
     : '(' parameter_list ')' 
         { 
             node_t* cur = $2;
-            fprintf(stderr, "\nFUFUFUSADJDSFSADJJDASJFDSAJJFSADAFD111\n");
             print_list(cur);
 
             while(cur != NULL){
@@ -308,9 +307,6 @@ arguments
 
                 /* Handle the frame offset of this variable. */
                 copy->frameOffset = cur->frameOffset = addVariableToScope(top_scope, sizeof(int));
-                fprintf(stderr, "%d\n", top_scope->scopeBlockCounter);
-                fprintf(stderr, "%d\n", copy->frameOffset);
-                fprintf(stderr, "AYOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
 
                 scope_insert_node(top_scope, copy); 
 

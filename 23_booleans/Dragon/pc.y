@@ -363,6 +363,7 @@ parameter_list
         $$ = idList;
         print_list(idList);
     }
+    | /* empty */ { $$ = NULL; }
     ;
 
 compound_statement
@@ -506,7 +507,7 @@ variable
         }
         if(strcmp($1, top_scope->scopeOwner->name)){
             if(varNode->nodeType != VAR){
-                fprintf(stderr, "\n%d\n", varNode->nodeType);
+                fprintf(stderr, "\n%d      %s\n", varNode->nodeType, top_scope->scopeOwner->name);
                 yyerror("Accesed identifier is not a variable\n");
             }
             if(varNode->data.varInfo.isArray == IS_ARRAY){
@@ -576,6 +577,7 @@ expression_list /* Returns a list of the types returned from each expression */
         $$ = insertTree($3, $1); 
         /*fprintf(stderr, "AFTER insertVarNode %d\n", $$);*/
     }
+    | { $$ = NULL; }/* empty */
     ;
 
 expression

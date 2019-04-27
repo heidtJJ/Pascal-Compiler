@@ -339,6 +339,13 @@ int hasNoReturnStmt(int flags){
     return 0;
 }
 
+
+void print_spaces(int num_spaces){
+    for(int i = 0; i < num_spaces; ++i){
+        fprintf(stderr, " ");
+    }
+}
+
 int max(int a, int b) {
     return a > b ? a : b;
 }

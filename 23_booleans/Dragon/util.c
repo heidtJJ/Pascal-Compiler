@@ -76,11 +76,18 @@ void findMaxNumArgsUtil(tree_t* root, int* maxNumArguments){
     if(root == NULL){
         return;
     }
-    else if(root->type == PROCEDURE_CALL || root->type == FUNCTION_CALL
-            && root->rightChild != NULL){
-        TreeList* arguments = root->rightChild->attribute.listVal;
-        if(arguments->listLength > *maxNumArguments){
-            *maxNumArguments = arguments->listLength;
+    else if(root->type == PROCEDURE_CALL || root->type == FUNCTION_CALL){
+        // Right child is the statement list for arguments.
+        if(root->rightChild != NULL){
+            TreeList* actualArguments = root->rightChild->attribute.listVal;
+            
+            // Get number of the actual entered arguments.
+            int actualArgumentsLength = 
+                actualArguments == NULL ? 0 : actualArguments->listLength;
+
+            if(actualArgumentsLength > *maxNumArguments){
+                *maxNumArguments = actualArgumentsLength;
+            }
         }
     }
     findMaxNumArgsUtil(root->leftChild, maxNumArguments);
@@ -167,10 +174,11 @@ int getExpressionType(scope_t* curScope, tree_t* exprTree){
         // Return should be boolean
         int leftType = getExpressionType(curScope, exprTree->leftChild);
         int rightType = getExpressionType(curScope, exprTree->rightChild);
-        if(leftType == rightType && rightType == BOOLEAN){
+        if(leftType == rightType){
             return BOOLEAN;
         }
         else{
+            tree_print(exprTree);
             yyerror("RELOP error in getExpressionType");
         }
     }

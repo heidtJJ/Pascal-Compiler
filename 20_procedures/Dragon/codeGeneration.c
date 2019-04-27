@@ -27,10 +27,13 @@
 */
 
 #define ARGUMENT_1_OFFSET 16
+#define RBP "%rbp"
 
 extern int yyerror( char*);
+int getExpressionType(scope_t* curScope, tree_t* exprTree);
 
 RegisterStack* registerStack = NULL;
+RegisterStack* poppedRegisters = NULL;
 
 /* Top of assembly file */
 char* topHeader = "\t.text\n\t.section\t.rodata\n.LC0:\n\t.string\t\"%d\\n\"\n\t.text\n\t.globl\tmain\n\t.type\tmain, @function\n.LC1:\n\t.string\t\"%d\"\n\t.text\n\t.globl\tmain\n\t.type\tmain, @function\n";
@@ -62,11 +65,8 @@ char* my_itoa(int num, char *str){
 
 void setupRegisterStack(){
 	registerStack = pushRegisterStr(NULL, "%edi");
-//	registerStack = pushRegisterStr(registerStack, "%esi");
-//	registerStack = pushRegisterStr(registerStack, "%edx");
 	registerStack = pushRegisterStr(registerStack, "%ecx");
 	registerStack = pushRegisterStr(registerStack, "%ebx");
-//	registerStack = pushRegisterStr(registerStack, "%eax");
 }
 
 void freeRegisters(){
@@ -90,22 +90,66 @@ void lowerStackPointer(FILE* outFile, int curScopeSize){
 /*
     Prints to offsetString a string of format: %offset(%rbp).
 */
-void getOffsetString(int frameOffset, char* offsetString){
+void getOffsetString(int frameOffset, char* offsetString, char* baseReg){
     if(frameOffset > 0){
-        sprintf(offsetString, "-%d(%%rbp)", frameOffset);
+        sprintf(offsetString, "-%d(%s)", frameOffset, baseReg);
     }
     else{
-        sprintf(offsetString, "%d(%%rbp)", -frameOffset);        
+        sprintf(offsetString, "%d(%s)", -frameOffset, baseReg);        
     }
 }
 
 /*
-    Prints to offsetString a string of format: %offset(%rbp).
+    Outputs the MEAT of the movl x86 commands.
 */
-void getVarOffset(int frameOffset, char* offsetString){
-    
+void movHelper(FILE* outFile, char* arg1, char* arg2){
+    fputs(arg1, outFile);
+    fputs(", ", outFile);
+    fputs(arg2, outFile);
+    fputs("\n", outFile);
 }
 
+/*
+    Outputs code to outFile to movq a value in arg1 to arg2.
+*/
+void genMovqCode(FILE* outFile, char* arg1, char* arg2){
+    fputs("\tmovq\t", outFile);
+    movHelper(outFile, arg1, arg2);
+}
+
+/*
+    Outputs code to outFile to movl a value in arg1 to arg2.
+*/
+void genMovlCode(FILE* outFile, char* arg1, char* arg2){
+    fputs("\tmovl\t", outFile);
+    movHelper(outFile, arg1, arg2);
+}
+
+
+/*
+    Outputs code to put the value in idNode into %eax. 
+*/
+void getVarOffset(FILE* outFile, node_t* idNode, char* offsetString, scope_t* topScope){
+    assert(topScope != NULL);
+    if(scope_search(topScope, idNode->name) != NULL ){
+        getOffsetString(idNode->frameOffset, offsetString, RBP);
+    }
+    else{
+        short firstPass = 1;
+        while(scope_search(topScope, idNode->name) == NULL){
+            assert(topScope != NULL);
+            topScope = topScope->next;
+            if(firstPass){
+                genMovqCode(outFile, RBP, "%rax");
+            }
+            genMovqCode(outFile, "(%rax)", "%rax");
+            firstPass = 0;
+        }
+        getOffsetString(idNode->frameOffset, offsetString, "%rax");
+
+        fprintf(stderr, "HERE2: %s\n", offsetString);
+    }
+}
 
 /*
     Outputs the x86 code to outFile to begin a procedure or function
@@ -113,7 +157,7 @@ void getVarOffset(int frameOffset, char* offsetString){
 */
 void genCodePrintProcBegin(FILE* outFile, scope_t* topScope){
     // Output subprogram name and begining code. 
-    fputs(topScope->scopeOwner->name, outFile);
+    fputs(topScope->scopeName, outFile);
     fputs(":\n", outFile);
     fputs(funcProcCodeBegin, outFile);
 
@@ -126,11 +170,11 @@ void genCodePrintProcBegin(FILE* outFile, scope_t* topScope){
     while(curArgument != NULL){
         // Create string for the argument from previous scope.
         char argOffsetString[12];
-        getOffsetString(-offsetBelowBP, argOffsetString);
+        getOffsetString(-offsetBelowBP, argOffsetString, RBP);
 
         // Create string for the argument from previous scope.
         char localOffsetString[12];
-        getOffsetString(curArgument->frameOffset, localOffsetString);
+        getOffsetString(curArgument->frameOffset, localOffsetString, RBP);
 
         // Output code for moving argument to local variable.
         genMovlCode(outFile, argOffsetString, "%eax");
@@ -186,17 +230,6 @@ char* getFileName(char* programId){
 }
 
 /*
-    Outputs code to outFile for moving value in arg1 to arg2.
-*/
-void genMovlCode(FILE* outFile, char* arg1, char* arg2){
-    fputs("\tmovl\t", outFile);
-    fputs(arg1, outFile);
-    fputs(", ", outFile);
-    fputs(arg2, outFile);
-    fputs("\n", outFile);
-}
-
-/*
     Outputs code to outFile for printing the value in stackLocation.
 */
 void genPrintfCode(FILE* outFile, char* stackLocation){
@@ -232,12 +265,12 @@ void startSubprogram(FILE* outFile, tree_t* root, scope_t* topScope){
         // Setup expression tree for evaluation.
         labelTree(argument, 1);
         // Generate code for expression.
-        genExpression(outFile, argument, topScope);
+        genExpression(outFile, argument, topScope, 1);
         // Expression return value is now in top register.
 
         // Get location in string format for this argument.
         char argLocation[12];
-        getOffsetString(basePointerOffset, argLocation);
+        getOffsetString(basePointerOffset, argLocation, RBP);
         
         // Move the expression return value into the argument position.
         genMovlCode(outFile, registerStack->registerName, "%eax");
@@ -252,6 +285,8 @@ void startSubprogram(FILE* outFile, tree_t* root, scope_t* topScope){
 
     // Call subprogram.
     fputs("\tcall\t", outFile);
+    fputs(topScope->scopeName, outFile);
+    fputs("_", outFile);
     fputs(root->leftChild->attribute.nval->name, outFile);
     fputs("\n", outFile);
 }
@@ -276,19 +311,23 @@ void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
         tree_t* varTree = root->leftChild;
         assert(exprTree != NULL);
         
-        labelTree(exprTree, 1);// Setup expression tree for evaluation.
-        genExpression(outFile, exprTree, topScope);// Generate code for expression.
+        // Setup expression tree for code generation.
+        labelTree(exprTree, 1);
+        genExpression(outFile, exprTree, topScope, 1);
         // Expression return value is now in top register.
         
+        // Check if the variable is an ID or array.
         if(varTree->type == ID){
             node_t* idNode = varTree->attribute.nval;
             if(idNode->nodeType == FUNCTION){
+                // This sets up the "return" statement for functions.
                 genMovlCode(outFile, registerStack->registerName, "%esi");                
             }
             else{
-                char strOffset[12];// Could be dangerous. Rare that the offset has >12 characters though.
-                getOffsetString(idNode->frameOffset, strOffset);
+                // Sets the value of a variable. Could be in another scope (another stack frame).
                 assert(idNode->frameOffset != 0);
+                char strOffset[12];// Could be dangerous but rare for offset >12 characters.
+                getVarOffset(outFile, idNode, strOffset, topScope);
                 genMovlCode(outFile, registerStack->registerName, strOffset);
             }
         }
@@ -303,7 +342,7 @@ void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
         
     }
     else if(root->type == WRITE){
-        fprintf(stderr,"WRITE statement\n");
+        fprintf(stderr, "WRITE statement\n");
         tree_print(root);
 
         tree_t* exprTree = root->leftChild;
@@ -314,7 +353,10 @@ void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
         labelTree(exprTree, 1);
         tree_label_print(exprTree);
 
-        genExpression(outFile, exprTree, topScope);
+        genExpression(outFile, exprTree, topScope, 1);
+        
+        fprintf(stderr, "Made it here2\n");
+
         genPrintfCode(outFile, registerStack->registerName);
     }
     else if(root->type == READ){
@@ -322,7 +364,7 @@ void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
         tree_t* idTree = root->leftChild;
         assert(idTree != NULL && idTree->type == ID);
         char varLocation[12];
-        getOffsetString(idTree->attribute.nval->frameOffset, varLocation);
+        getVarOffset(outFile, idTree->attribute.nval, varLocation, topScope);
         genReadCode(outFile, varLocation);
     }
     else{
@@ -334,7 +376,7 @@ void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
 /*
     Translates the value of the leaf into a string readable by x86 code.
 */
-void getLeafString(tree_t* leaf, char* leafString, scope_t* topScope){
+void getLeafString(FILE* outFile, tree_t* leaf, char* leafString, scope_t* topScope){
     assert(leaf->label == 0 || leaf->label == 1);
     if(leaf->type == INUM){
         sprintf(leafString, "$%d", leaf->attribute.ival);
@@ -346,11 +388,11 @@ void getLeafString(tree_t* leaf, char* leafString, scope_t* topScope){
         node_t* idNode = leaf->attribute.nval;
         if(scope_search(topScope, idNode->name) != NULL){
             // This variable is in the current scope.
-            getOffsetString(idNode->frameOffset, leafString);
+            getOffsetString(idNode->frameOffset, leafString, RBP);
         }
         else{
             // This variable is in a different scope. Must start chasing.
-            getOffsetString(idNode->frameOffset, leafString);
+            getVarOffset(outFile, leaf->attribute.nval, leafString, topScope);
         }
     }
     else{
@@ -393,7 +435,7 @@ void writeOperatorCode(FILE* outFile, scope_t* topScope, tree_t* operatorRoot, c
     if(operatorRoot->attribute.opval == SLASH){  
         // Move arg1 to temp location.
         char tempLocation[12];
-        getOffsetString(topScope->tempsAddress, tempLocation);
+        getOffsetString(topScope->tempsAddress, tempLocation, RBP);
         genMovlCode(outFile, arg1, "%eax");
         genMovlCode(outFile, "%eax", tempLocation);
         
@@ -411,6 +453,7 @@ void writeOperatorCode(FILE* outFile, scope_t* topScope, tree_t* operatorRoot, c
     }
     else if(operatorRoot->type == FUNCTION_CALL){
         // This case should not happen?
+        assert(0);
         startSubprogram(outFile, operatorRoot, topScope);
         // Return value is in %eax.
     }
@@ -432,87 +475,127 @@ void writeOperatorCode(FILE* outFile, scope_t* topScope, tree_t* operatorRoot, c
 
 void genCode(FILE* outFile, tree_t* root, scope_t* topScope){
     assert(registerStack != NULL);
-    if(isLeaf(root) && root->label == 1){
-        // Left Child
-        fprintf(stderr, "CASE 0\n");
-        
-        char name[12];
-        getLeafString(root, name, topScope);
-        genMovlCode(outFile, name, registerStack->registerName);
-        fputs("\n", outFile);    
-    }
-    else if(root->rightChild->label == 0){
-        // Right Child
-        fprintf(stderr, "CASE 1\n");
-
-        genCode(outFile, root->leftChild, topScope);
-        
-        char name[12];
-        getLeafString(root->rightChild, name, topScope);
-        
-        writeOperatorCode(outFile, topScope, root, name, registerStack);
-        fputs("\n", outFile);    
-    }
-    else if(root->rightChild->label > root->rightChild->label){
-        fprintf(stderr, "CASE 2\n");
-
-        registerStack = swapRegisterStack(registerStack);
-        genCode(outFile, root->rightChild, topScope);
-        RegisterStack* poppedReg = popRegister(&registerStack);
-        genCode(outFile, root->leftChild, topScope);
-       
-        writeOperatorCode(outFile, topScope, root, poppedReg->registerName, registerStack);
-
-        registerStack = pushRegister(registerStack, poppedReg);
-        registerStack = swapRegisterStack(registerStack);
-        fputs("\n", outFile);    
-    }
-    else if(root->rightChild->label <= root->rightChild->label){
-        fprintf(stderr, "CASE 3\n");
-
-        genCode(outFile, root->leftChild, topScope);
-
-        RegisterStack* poppedReg = popRegister(&registerStack);
-        fprintf(stderr, "HERE %d %d\n", poppedReg, registerStack);
-        
-        genCode(outFile, root->rightChild, topScope);
-        writeOperatorCode(outFile, topScope, root, registerStack->registerName, poppedReg);
     
-        registerStack = pushRegister(registerStack, poppedReg);
-        fputs("\n", outFile);    
-    }
-    else{
-        assert(0);
-    }
 }
+
+void genPushqCode(FILE* outFile, char* locationToPush){
+    fputs("\tpushq\t", outFile);
+    fputs(locationToPush, outFile);
+    fputs("\n", outFile);
+}
+
+void pushAllRegisters(FILE* outFile){
+    genPushqCode(outFile, "%rdi");
+    genPushqCode(outFile, "%rcx");
+    genPushqCode(outFile, "%rbx");
+}
+
+void restoreAllRegisters(FILE* outFile){
+    genMovqCode(outFile, "0(%rsp)", "%rbx");
+    genMovqCode(outFile, "4(%rsp)", "%rcx");
+    genMovqCode(outFile, "8(%rsp)", "%rdi");
+    fputs("\taddq\t$12, %rsp\n", outFile);
+}
+
 
 /*
     Tree is assumed to be already labeled. This is the gen_code algorithm.
 */
-void genExpression(FILE* outFile, tree_t* root, scope_t* topScope){
-    /* 
-        Case where root is leaf. Should only happen when no operators.
-        This is an exeption to the genCode algorithm.
-    */
+void genExpression(FILE* outFile, tree_t* root, scope_t* topScope, short isLeftMost){
+    // Leaf case.
     if(isLeaf(root)){
-        char name[12];
-        fprintf(stderr, "LEAF EXPRESSIONNNN\n");
-        getLeafString(root, name, topScope);
-        genMovlCode(outFile, name, registerStack->registerName);
+        fprintf(stderr, "CASE 0\n");
+        fprintf(stderr, "%d\n", registerStack);
+
+        // Check for leftMost leaf.
+        if(isLeftMost){
+            fprintf(stderr, "Top Register %s\n", registerStack->registerName);
+
+            char name[12];
+            getLeafString(outFile, root, name, topScope);
+            genMovlCode(outFile, name, registerStack->registerName);
+        }
+        else{ assert(0); }
     }
-    else if(root->type == FUNCTION_CALL){
+    // Non-Leaf cases.
+    else if(root->type == FUNCTION_CALL){        
+        // Put all remaining registers on the runtime stack.
+        fputs("# Putting regs on the stack.\n", outFile);
+        pushAllRegisters(outFile);
+        fputs("# Done putting regs on the stack.\n", outFile);
+
+        // Call function.
         startSubprogram(outFile, root, topScope);
+        
+        fputs("# Restoring regs on the stack.\n", outFile);
+        // Restore registers
+        restoreAllRegisters(outFile);
+        fputs("# Done restoring regs on the stack.\n", outFile);
+
+        // Return value is now in %esi.
         genMovlCode(outFile, "%esi", registerStack->registerName);
-        // Return value is in %eax.
     }
     else if(root->type == NOT){
 
     }
     else{
-        int leftChildType = getExpressionType(topScope, root->leftChild);// INTEGER or REAL
-        assert(leftChildType == REAL || leftChildType == INTEGER);
-        if(leftChildType == INTEGER){
-            genCode(outFile, root, topScope);
+        assert(root->type == RELOP || root->type == ADDOP || root->type == MULOP);
+
+        // Root is an operator.
+        int leftChildType = getExpressionType(topScope, root->leftChild);
+        assert(leftChildType == INTEGER);// For now
+        
+        tree_t* leftChild = root->leftChild;
+        tree_t* rightChild = root->rightChild;
+        if(rightChild->label == 0){
+            // Right Child
+            fprintf(stderr, "CASE 1\n");
+
+            genExpression(outFile, leftChild, topScope, 1);
+            
+            char name[12];
+            getLeafString(outFile, rightChild, name, topScope);            
+
+            writeOperatorCode(outFile, topScope, root, name, registerStack);
+            fputs("\n", outFile);    
+        }
+        else if(rightChild->label > rightChild->label){
+            fprintf(stderr, "CASE 2\n");
+
+            registerStack = swapRegisterStack(registerStack);
+            genExpression(outFile, rightChild, topScope, 0);
+            
+            RegisterStack* poppedReg = popRegister(&registerStack);
+            poppedRegisters = pushRegister(poppedRegisters, poppedReg);
+            
+            fprintf(stderr, "POPPED %s\n", poppedReg->registerName);
+
+            genExpression(outFile, leftChild, topScope, 1);
+        
+            writeOperatorCode(outFile, topScope, root, poppedReg->registerName, registerStack);
+
+            registerStack = pushRegister(registerStack, poppedReg);
+            registerStack = swapRegisterStack(registerStack);
+            poppedRegisters = popRegister(&poppedRegisters);
+
+            fputs("\n", outFile);    
+        }
+        else if(leftChild->label <= rightChild->label){
+            fprintf(stderr, "CASE 3\n");
+
+            genExpression(outFile, leftChild, topScope, 1);
+
+            RegisterStack* poppedReg = popRegister(&registerStack);
+            poppedRegisters = pushRegister(poppedRegisters, poppedReg);
+
+            fprintf(stderr, "POPPED %s\n", poppedReg->registerName);
+            
+            genExpression(outFile, rightChild, topScope, 0);
+            writeOperatorCode(outFile, topScope, root, registerStack->registerName, poppedReg);
+        
+            registerStack = pushRegister(registerStack, poppedReg);
+            poppedRegisters = popRegister(&poppedRegisters);
+            fputs("\n", outFile);    
         }
         else{
             assert(0);

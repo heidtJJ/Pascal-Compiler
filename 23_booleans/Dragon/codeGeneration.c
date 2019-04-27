@@ -26,11 +26,12 @@
 
 */
 
-#define ARGUMENT_1_OFFSET 16
+#define ARGUMENT_1_OFFSET 12
 #define RBP "%rbp"
 
 extern int yyerror( char*);
 int getExpressionType(scope_t* curScope, tree_t* exprTree);
+int countDigits(int branchStringCounter);
 
 RegisterStack* registerStack = NULL;
 RegisterStack* poppedRegisters = NULL;
@@ -175,9 +176,18 @@ void genCodePrintProcBegin(FILE* outFile, scope_t* topScope){
     // Lower stack pointer for current scope on runtime stack.
     lowerStackPointer(outFile, topScope->curScopeSize);
     
+
     // Load arguments in previous scope to local variables on runtime stack.
-    node_t* curArgument = topScope->scopeOwner->data.functionInfo.arguments;
-    int offsetBelowBP = ARGUMENT_1_OFFSET;
+    node_t* scopeOwner = topScope->scopeOwner;
+    node_t* curArgument = NULL;
+    if(scopeOwner->nodeType == FUNCTION){
+        curArgument = scopeOwner->data.functionInfo.arguments;
+    }
+    else{
+        curArgument = scopeOwner->data.procedureInfo.arguments;
+    }
+    int offsetBelowBP = 16;
+    
     while(curArgument != NULL){
         // Create string for the argument from previous scope.
         char argOffsetString[12];
@@ -384,8 +394,11 @@ void labelTree(tree_t* root, short isLeftMost){
     function is called. 
 */
 void startSubprogram(FILE* outFile, tree_t* root, scope_t* topScope){
-    // Retrieve argument list from tree node.    
-    TreeList* curArgument = root->rightChild->attribute.listVal;
+    // Retrieve argument list from tree node.  
+    TreeList* curArgument = NULL;
+    if(root->rightChild != NULL){
+        curArgument = root->rightChild->attribute.listVal;
+    }  
     
     // Initialize the offset from the base pointer to the first
     // argument position.
@@ -408,7 +421,7 @@ void startSubprogram(FILE* outFile, tree_t* root, scope_t* topScope){
         genMovlCode(outFile, "%eax", argLocation);
         
         // Increase base pointer and move to next argument. 
-        basePointerOffset += 4;
+        basePointerOffset -= 4;
         curArgument = curArgument->next;
     }
     // Set the return value to 0 before calling subprogram.
@@ -674,6 +687,117 @@ char* getBranchString(int count){
     return branchString;
 }
 
+void genForBranching(FILE* outFile, tree_t* root, scope_t* topScope){
+    assert(root->type == FOR);
+
+    // $$ = mktree(FOR, mktree(ASSIGNOP, $2, $4), mktree(TO, $6, mktree(DO, $8, NULL))); 
+    
+    // Retrieve the tree leaf for the variable to be checked. 
+    tree_t* variableTree = root->leftChild->leftChild;
+    tree_t* boundTree = root->rightChild->leftChild;
+    tree_t* statementTree = root->rightChild->rightChild->leftChild;
+
+    // Perform the assignment on the variable.
+    labelTree(variableTree, 1);
+    genStatement(outFile, root->leftChild, topScope);
+
+    char* stmtBranchString = getBranchString(branchStringCounter++);
+    char* boolBranchString = getBranchString(branchStringCounter++);
+
+    // Jump to the condition check.
+    fputs("\tjmp\t", outFile); 
+    fputs(boolBranchString, outFile); 
+    fputs("\n", outFile); 
+
+    // Set branch for the statement.
+    fputs(stmtBranchString, outFile); 
+    fputs(":\n", outFile); 
+
+    tree_print(statementTree);
+
+    // Perform a +1 to the variable.
+    tree_t* add1Tree = mktree(ASSIGNOP, variableTree, mkop(ADDOP, PLUS, variableTree, mkinum(1)));
+    labelTree(add1Tree, 1);
+    genStatement(outFile, add1Tree, topScope);
+    free(add1Tree->rightChild->rightChild);
+    free(add1Tree->rightChild);
+    free(add1Tree);
+  
+
+    // Generate statement code.
+    genStatement(outFile, statementTree, topScope);
+
+    // Set branch for the condition check.
+    fputs(boolBranchString, outFile); 
+    fputs(":\n", outFile); 
+    
+    // Generate code to check the condition.
+    tree_t* lessThanEqTree = mkop(RELOP, LE, variableTree, boundTree);
+    labelTree(lessThanEqTree, 1);
+    genExpression(outFile, lessThanEqTree, topScope, 1);
+    free(lessThanEqTree);
+
+    // Compare the result of the expression with 1 (true).
+    printCompareCode(outFile, "$1", registerStack->registerName);
+    
+    fputs("\tje\t", outFile);  
+    fputs(stmtBranchString, outFile);  
+    fputs("\n", outFile); 
+
+
+    // Deallocate strings.
+    free(stmtBranchString);
+    free(boolBranchString);
+}
+
+/*
+    Branching is used for executing while statements.
+    This function generates the code for those.
+*/
+void genWhileBranching(FILE* outFile, tree_t* root, scope_t* topScope){
+    assert(root->type == WHILE);
+
+    // Left side is boolean expression
+    tree_t* booleanTree = root->leftChild;
+    // Right side is a statement to do while true.
+    tree_t* statementTree = root->rightChild;
+
+    // Setup expression tree for code generation.
+    labelTree(booleanTree, 1);
+    
+    char* stmtBranchString = getBranchString(branchStringCounter++);
+    char* boolBranchString = getBranchString(branchStringCounter++);
+
+    // Jump to the condition check.
+    fputs("\tjmp\t", outFile); 
+    fputs(boolBranchString, outFile); 
+    fputs("\n", outFile); 
+
+    // Set branch for the statement.
+    fputs(stmtBranchString, outFile); 
+    fputs(":\n", outFile); 
+
+    // Generate statement code.
+    genStatement(outFile, statementTree, topScope);
+
+    // Set branch for the condition check.
+    fputs(boolBranchString, outFile); 
+    fputs(":\n", outFile); 
+    genExpression(outFile, booleanTree, topScope, 1);
+    
+    // Compare the result of the expression with 1 (true).
+    printCompareCode(outFile, "$1", registerStack->registerName);
+    
+    fputs("\tje\t", outFile);  
+    fputs(stmtBranchString, outFile);  
+    fputs("\n", outFile); 
+
+    // Deallocate strings.
+    free(stmtBranchString);
+    free(boolBranchString);
+}
+
+
 /*
     Branching is used for executing if-then-else statements.
     This function generates the code for those.
@@ -707,7 +831,7 @@ void genIfBranching(FILE* outFile, tree_t* root, scope_t* topScope){
         
         // Generate branching code.
         fputs("\tje\t", outFile);  
-        fputs(endBranchString, outFile);  
+        fputs(elseBranchString, outFile);  
         fputs("\n", outFile); 
 
         // Generate then statements.
@@ -720,14 +844,14 @@ void genIfBranching(FILE* outFile, tree_t* root, scope_t* topScope){
 
         // Indicate the location of the else statement.
         fputs(elseBranchString, outFile); 
-        fputs("\n", outFile);
+        fputs(":\n", outFile);
 
         // Generate else statement.
         genStatement(outFile, root->rightChild, topScope);
 
         // Indicate the end of branching location.
         fputs(endBranchString, outFile); 
-        fputs("\n", outFile);
+        fputs(":\n", outFile);
 
         // Deallocate.
         free(elseBranchString);
@@ -789,10 +913,12 @@ void genStatement(FILE* outFile, tree_t* root, scope_t* topScope){
         }
     }
     else if(root->type == WHILE){
-        
+        // Create the x86 flow for a while loop.
+        genWhileBranching(outFile, root, topScope);
     }
     else if(root->type == FOR){
-        
+        // FOR variable ASSIGNOP expression TO expression DO statement
+        genForBranching(outFile, root, topScope);
     }
     else if(root->type == WRITE){
         fprintf(stderr, "WRITE statement\n");
