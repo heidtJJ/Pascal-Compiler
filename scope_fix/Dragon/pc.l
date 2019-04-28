@@ -56,8 +56,10 @@ ident       [A-Za-z][A-Za-z0-9]*
 "or"    { fprintf(stderr, "[ADDOP:%d]", yylval.opval = OR); return ADDOP; }
 
 "*"    { fprintf(stderr, "[MULOP:%d]", yylval.opval = STAR); return MULOP; }
+"div"    { fprintf(stderr, "[MULOP:%d]", yylval.opval = SLASH); return MULOP; }
 "/"    { fprintf(stderr, "[MULOP:%d]", yylval.opval = SLASH); return MULOP; }
 "and"    { fprintf(stderr, "[MULOP:%d]", yylval.opval = AND); return MULOP; }
+"mod"    { fprintf(stderr, "[MULOP:%d]", yylval.opval = MOD); return MULOP; }
 
 "not"    { fprintf(stderr, "[NOT:%d]", NOT); return NOT; }
 

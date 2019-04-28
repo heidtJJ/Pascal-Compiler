@@ -13,41 +13,34 @@
 outer_middle_alpha:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$48, %rsp # lowering the stack pointer.
-	movl	48(%rbp), %eax
+	subq	$64, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movl	56(%rbp), %eax
 	movl	%eax, -8(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -24(%rbp)
+	movl	%esi, -32(%rbp)
 	movl	$42, %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-24(%rbp), %esi
-	movq	%rbp, %rax
-	movq	(%rax), %rax
-	movq	(%rax), %rax
+	movl	-32(%rbp), %esi
+	movq	-16(%rbp), %rax
 	movq	(%rax), %rax
 	movl	%ebx, -16(%rax)
-
-
-
-
-
-
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -24(%rbp)
-	movq	%rbp, %rax
-	movq	(%rax), %rax
+	movl	%esi, -32(%rbp)
+	movq	-16(%rbp), %rax
 	movq	(%rax), %rax
 	movl	-16(%rax), %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-24(%rbp), %esi
+	movl	-32(%rbp), %esi
 	# Putting current return value to temporary location printf.
-	movl	%esi, -12(%rbp)
+	movl	%esi, -20(%rbp)
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
 	# Restoring current return value to temporary location after printf.
-	movl	-12(%rbp), %esi
+	movl	-20(%rbp), %esi
 	leave
 	ret
 .outer_middle_alpha:
@@ -57,18 +50,22 @@ outer_middle_alpha:
 outer_middle_beta:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$48, %rsp # lowering the stack pointer.
-	movl	48(%rbp), %eax
+	subq	$64, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movl	56(%rbp), %eax
 	movl	%eax, -8(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -28(%rbp)
+	movl	%esi, -36(%rbp)
+	movq	-16(%rbp), %rax
+	movq	%rax, -64(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -24(%rbp)
+	movl	%esi, -32(%rbp)
 	movl	-8(%rbp), %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-24(%rbp), %esi
+	movl	-32(%rbp), %esi
 	movl	%ebx, %eax
-	movl	%eax, -48(%rbp)
+	movl	%eax, -56(%rbp)
 # Putting regs on the stack.
 	pushq	%rdi
 	pushq	%rdi
@@ -80,23 +77,22 @@ outer_middle_beta:
 	movq	8(%rsp), %rdi
 	addq	$16, %rsp # raising the stack pointer.
 	# Restoring current return value to temporary location after expression.
-	movl	-28(%rbp), %esi
+	movl	-36(%rbp), %esi
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -24(%rbp)
-	movq	%rbp, %rax
-	movq	(%rax), %rax
+	movl	%esi, -32(%rbp)
+	movq	-16(%rbp), %rax
 	movq	(%rax), %rax
 	movl	-16(%rax), %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-24(%rbp), %esi
+	movl	-32(%rbp), %esi
 	# Putting current return value to temporary location printf.
-	movl	%esi, -12(%rbp)
+	movl	%esi, -20(%rbp)
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
 	# Restoring current return value to temporary location after printf.
-	movl	-12(%rbp), %esi
+	movl	-20(%rbp), %esi
 	leave
 	ret
 .outer_middle_beta:
@@ -106,18 +102,22 @@ outer_middle_beta:
 outer_middle:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$48, %rsp # lowering the stack pointer.
-	movl	48(%rbp), %eax
+	subq	$64, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movl	56(%rbp), %eax
 	movl	%eax, -8(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -28(%rbp)
+	movl	%esi, -36(%rbp)
+	movq	%rbp, %rax
+	movq	%rax, -64(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -24(%rbp)
+	movl	%esi, -32(%rbp)
 	movl	$0, %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-24(%rbp), %esi
+	movl	-32(%rbp), %esi
 	movl	%ebx, %eax
-	movl	%eax, -48(%rbp)
+	movl	%eax, -56(%rbp)
 # Putting regs on the stack.
 	pushq	%rdi
 	pushq	%rdi
@@ -129,7 +129,7 @@ outer_middle:
 	movq	8(%rsp), %rdi
 	addq	$16, %rsp # raising the stack pointer.
 	# Restoring current return value to temporary location after expression.
-	movl	-28(%rbp), %esi
+	movl	-36(%rbp), %esi
 	leave
 	ret
 .outer_middle:
@@ -139,22 +139,26 @@ outer_middle:
 outer:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$48, %rsp # lowering the stack pointer.
+	subq	$64, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -24(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -32(%rbp)
+	movl	%esi, -40(%rbp)
 	movl	$0, %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-32(%rbp), %esi
+	movl	-40(%rbp), %esi
 	movl	%ebx, -16(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -36(%rbp)
+	movl	%esi, -44(%rbp)
+	movq	%rbp, %rax
+	movq	%rax, -64(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -32(%rbp)
+	movl	%esi, -40(%rbp)
 	movl	$5, %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-32(%rbp), %esi
+	movl	-40(%rbp), %esi
 	movl	%ebx, %eax
-	movl	%eax, -48(%rbp)
+	movl	%eax, -56(%rbp)
 # Putting regs on the stack.
 	pushq	%rdi
 	pushq	%rdi
@@ -166,20 +170,20 @@ outer:
 	movq	8(%rsp), %rdi
 	addq	$16, %rsp # raising the stack pointer.
 	# Restoring current return value to temporary location after expression.
-	movl	-36(%rbp), %esi
+	movl	-44(%rbp), %esi
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -32(%rbp)
+	movl	%esi, -40(%rbp)
 	movl	-16(%rbp), %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-32(%rbp), %esi
+	movl	-40(%rbp), %esi
 	# Putting current return value to temporary location printf.
-	movl	%esi, -20(%rbp)
+	movl	%esi, -28(%rbp)
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
 	# Restoring current return value to temporary location after printf.
-	movl	-20(%rbp), %esi
+	movl	-28(%rbp), %esi
 	leave
 	ret
 .outer:

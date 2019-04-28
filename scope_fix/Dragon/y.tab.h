@@ -85,16 +85,17 @@ extern int yydebug;
     STAR = 295,
     SLASH = 296,
     AND = 297,
-    NOT = 298,
-    ID = 299,
-    INUM = 300,
-    RNUM = 301,
-    COMMA = 302,
-    SEMICOLON = 303,
-    ARRAY_ACCESS = 304,
-    FUNCTION_CALL = 305,
-    PROCEDURE_CALL = 306,
-    COMPOUND_STATEMENT = 307
+    MOD = 298,
+    NOT = 299,
+    ID = 300,
+    INUM = 301,
+    RNUM = 302,
+    COMMA = 303,
+    SEMICOLON = 304,
+    ARRAY_ACCESS = 305,
+    FUNCTION_CALL = 306,
+    PROCEDURE_CALL = 307,
+    COMPOUND_STATEMENT = 308
   };
 #endif
 /* Tokens.  */
@@ -138,16 +139,17 @@ extern int yydebug;
 #define STAR 295
 #define SLASH 296
 #define AND 297
-#define NOT 298
-#define ID 299
-#define INUM 300
-#define RNUM 301
-#define COMMA 302
-#define SEMICOLON 303
-#define ARRAY_ACCESS 304
-#define FUNCTION_CALL 305
-#define PROCEDURE_CALL 306
-#define COMPOUND_STATEMENT 307
+#define MOD 298
+#define NOT 299
+#define ID 300
+#define INUM 301
+#define RNUM 302
+#define COMMA 303
+#define SEMICOLON 304
+#define ARRAY_ACCESS 305
+#define FUNCTION_CALL 306
+#define PROCEDURE_CALL 307
+#define COMPOUND_STATEMENT 308
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -166,7 +168,7 @@ union YYSTYPE
     node_t* nval;
     TreeList* treeListVal;
 
-#line 170 "y.tab.h" /* yacc.c:1909  */
+#line 172 "y.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

@@ -55,7 +55,7 @@
 %token PLUS MINUS OR
 
 %token <opval> MULOP
-%token STAR SLASH AND
+%token STAR SLASH AND MOD
 
 %token NOT 
 
@@ -395,11 +395,23 @@ compound_statement
                 flags = flags | NO_FUNCTION_RETURN;
             }
             
-            /* Add space to scope for temp variables. Allocate for 3 temp variables */
+            /* Add space to scope for the offset for the static parent. */
+            addVariableToScope(top_scope, sizeof(int));
+            top_scope->staticParentOffset = addVariableToScope(top_scope, sizeof(int));
+
+            /* Add space to scope for temp variables. Allocate for 6 temp variables */
             top_scope->tempsAddress = addVariableToScope(top_scope, 6*sizeof(int));
             
+            /* 
+                An additional 64-bit argument is needed to pass the static 
+                parent base pointer to the subprogram called next. 
+            */
+            addVariableToScope(top_scope, 2*sizeof(int));
+
+            /* Find the space needed for passing actual arguments to a subprogram. */
             int maxNumArguments = 0;
             findMaxNumArguments(statementList, &maxNumArguments);
+
             for(int i = 0; i < maxNumArguments; ++i){
                 addVariableToScope(top_scope, sizeof(int));
             }

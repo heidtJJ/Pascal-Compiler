@@ -24,6 +24,9 @@ typedef struct scope_s {
     // variables (16 bytes are added to scopeBlockCounter).
     int scopeBlockCounter;
 
+    // The offset of the base pointer for the static parent of a subprogram.
+    int staticParentOffset;
+
     // The starting address for temporary values/registers.
     int tempsAddress;
 

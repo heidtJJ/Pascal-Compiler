@@ -285,3 +285,22 @@ void copyNode(node_t* source, node_t* destination){
         assert(0);
     }
 }
+
+/*
+    Utility function to reverse the order of the linked list.
+*/
+node_t* reverseList(node_t* top){
+    if(top == NULL){
+        return NULL;
+    }
+    node_t* prev = NULL;
+    node_t* cur = top;
+    node_t* next = top->next;
+    while(next != NULL){
+        cur->next = prev;
+        prev = cur;
+        cur = next;
+        next = next->next;
+    }
+    return cur;
+}

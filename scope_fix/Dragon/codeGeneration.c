@@ -23,16 +23,29 @@
 
     Diagram of runtime stack according to this compiler:
         HIGH MEMORY (each scope has a size of a multiple of 16 bytes. scanf requires this)
-            reference address (1 word -> 4 bytes)
+            instruction reference address (1 word -> 4 bytes)
             old base pointer (1 word)
-            first local variable declared (Y words)
+            first local variable declared (X words)
             last local variable declared
-            temp variables (X words)
-            arguments to called function (Z words)
+            static parent address (1 word)
+            temp variables (Y words)
+            last argument to called subprogram (Z words)
+            first argument to called subprogram (static parent base pointer)
         LOW MEMORY
+
+    Note: When calling a new subprogram. The first argument set 
+    is the base pointer address of the static parent. 
 */
 
+/*
+    ARGUMENT_1_OFFSET = 
+            8 (64 bits) bytes for instruction pointer
+            + 8 (64 bits) bytes * 4 registers saved for subprogam call
+            + 2 unknown words
+            = 48
+*/
 #define ARGUMENT_1_OFFSET 48
+
 #define RBP "%rbp"
 #define RAX "%rax"
 
@@ -154,12 +167,15 @@ void chaseId(FILE * outFile, node_t * idNode, scope_t * topScope) {
     short firstPass = 1;
     while (scope_search(topScope, idNode->name) == NULL) {
         if (firstPass) {
-            // Move the base pointer to %rax on the first pass.
-            genMovqCode(outFile, RBP, "%rax");
+            // Move the static parent base pointer to %rax on the first pass.
+            char staticParentOffset[12];
+            getVarOffsetString(topScope->staticParentOffset, staticParentOffset, RBP);
+            genMovqCode(outFile, staticParentOffset, RAX);
         }
-        assert(topScope != NULL);
+        else{
+            genMovqCode(outFile, "(%rax)", RAX);
+        }
         topScope = topScope->next;
-        genMovqCode(outFile, "(%rax)", "%rax");
         firstPass = 0;
     }
 }
@@ -241,14 +257,31 @@ void genCodePrintProcBegin(FILE * outFile, scope_t * topScope) {
     } else {
         curArgument = scopeOwner->data.procedureInfo.arguments;
     }
-    int offsetBelowBP = ARGUMENT_1_OFFSET;
+    
+    // This value holds the offset above the base 
+    // pointer for the last/ending argument.
+    int curVarOffset = ARGUMENT_1_OFFSET;
+
+    // String for the argument location in previous stack frame.
+    char argOffsetString[12];
+    // String the local variable argument for current stack frame.
+    char localOffsetString[12];
+    
+    // Load the static parent base pointer into this stack frame.
+    getVarOffsetString(-curVarOffset, argOffsetString, RBP);
+    getVarOffsetString(topScope->staticParentOffset, localOffsetString, RBP);
+    
+    // Move the static base pointer into position.
+    genMovqCode(outFile, argOffsetString, RAX);
+    genMovqCode(outFile, RAX, localOffsetString);
+
+    curVarOffset += 2*sizeof(int);
+
     while (curArgument != NULL) {
         // Create string for the argument from previous scope.
-        char argOffsetString[12];
-        getVarOffsetString(-offsetBelowBP, argOffsetString, RBP);
+        getVarOffsetString(-curVarOffset, argOffsetString, RBP);
 
         // Create string for the argument from previous scope.
-        char localOffsetString[12];
         getVarOffsetString(curArgument->frameOffset, localOffsetString, RBP);
 
         // Output code for moving argument to local variable.
@@ -256,7 +289,7 @@ void genCodePrintProcBegin(FILE * outFile, scope_t * topScope) {
         genMovlCode(outFile, "%eax", localOffsetString);
 
         // Increase offset for next argument.
-        offsetBelowBP += sizeof(int);
+        curVarOffset += sizeof(int);
         curArgument = curArgument->next;
     }
 }
@@ -458,8 +491,9 @@ void labelTree(tree_t * root, short isLeftMost) {
 
 /*
     Outputs code to outFile for starting a procedure or 
-    function. Arguments are put into position and the next
-    function is called. 
+    function. Arguments are put into position, the base
+    pointer for the static parent is set (as an argument),
+    and the next function is called. 
 */
 void startSubprogram(FILE * outFile, tree_t * root, scope_t * topScope) {  
     // Retrieve argument list from tree node. 
@@ -469,8 +503,30 @@ void startSubprogram(FILE * outFile, tree_t * root, scope_t * topScope) {
     }
 
     // Initialize the offset from the base pointer to the first
-    // argument position.
+    // argument position. The offset is a positive number and
+    // above the base pointer in memory.
     int basePointerOffset = topScope->curScopeSize;
+
+    // Move the correct static parent base pointer location
+    // as the first argument.
+    char staticParentLocation[12];
+    if(scope_search(topScope, root->leftChild->attribute.nval->name) != NULL){
+        // Calling subprogram is the static parent. Pass current base pointer.
+        sprintf(staticParentLocation, "%s", RBP);
+    }
+    else{
+        // Calling subprogram shares the static parent.
+        getVarOffsetString(topScope->staticParentOffset, staticParentLocation, RBP);
+    }
+
+    // Execute the move from the static parent base pointer location
+    // to the called subprogram.
+    char argLocation[12];
+    getVarOffsetString(basePointerOffset, argLocation, RBP);
+    genMovqCode(outFile, staticParentLocation, RAX);
+    genMovqCode(outFile, RAX, argLocation);
+    basePointerOffset -= 2*sizeof(int);
+
     while (curArgument != NULL) {
         tree_t * argument = curArgument->statementTree;
 
@@ -487,23 +543,20 @@ void startSubprogram(FILE * outFile, tree_t * root, scope_t * topScope) {
         genMovlCode(outFile, registerStack->registerName, "%eax");
         genMovlCode(outFile, "%eax", argLocation);
         // Increase base pointer and move to next argument. 
-        basePointerOffset -= 4;
+        basePointerOffset -= sizeof(int);
         curArgument = curArgument->next;
     }
-    // Set the return value to 0 before calling subprogram.
-    //genMovlCode(outFile, "$0", "%esi");
-
+    // Save values of registers before subprogram call.
     pushAllRegisters(outFile);
 
     // Call subprogram.
     fputs("\tcall\t", outFile);
-    
-    fputs(getCodeName(root->leftChild->attribute.nval), outFile);
-
-    scope_print(topScope);
-   
+    fputs(getCodeName(root->leftChild->attribute.nval), outFile);   
     fputs("\n", outFile);
 
+    scope_print(topScope);
+
+    // Restore values of registers after subprogram call.
     restoreAllRegisters(outFile);
 
 }
@@ -580,28 +633,36 @@ void printRelopCode(FILE * outFile, tree_t * operatorRoot, char * arg1, Register
     fputs("\n", outFile);
 }
 
+void genDivisionCode(FILE * outFile, scope_t * topScope, char * arg1, RegisterStack * reg){
+    char tempLocation[12];
+    getVarOffsetString(topScope->tempsAddress + 4, tempLocation, RBP);
+    genMovlCode(outFile, arg1, "%eax");
+    genMovlCode(outFile, "%eax", tempLocation);
+    // Move value in reg to the division register, %eax.
+    genMovlCode(outFile, reg->registerName, "%eax");
+    fputs("\tcltd\n", outFile);
+    // Output division code.
+    fputs("\tidivl\t", outFile);
+    fputs(tempLocation, outFile);
+    fputs("\n", outFile);
+}
+
 /*
     Writes to code for an operator with two operands. Division is 
     handled differently than other operators in x86.
 */
 void writeOperatorCode(FILE * outFile, scope_t * topScope, tree_t * operatorRoot, char * arg1, RegisterStack * reg) {
     if (operatorRoot->attribute.opval == SLASH) {
-        // Move arg1 to temp location.
-        char tempLocation[12];
-        getVarOffsetString(topScope->tempsAddress + 4, tempLocation, RBP);
-        genMovlCode(outFile, arg1, "%eax");
-        genMovlCode(outFile, "%eax", tempLocation);
-        // Move value in reg to the division register, %eax.
-        genMovlCode(outFile, reg->registerName, "%eax");
-        fputs("\tcltd\n", outFile);
-        // Output division code.
-        fputs("\tidivl\t", outFile);
-        fputs(tempLocation, outFile);
-        fputs("\n", outFile);
-
+        genDivisionCode(outFile, topScope, arg1, reg);
         // Move result to top of registerStack.
         genMovlCode(outFile, "%eax", reg->registerName);
-    } else if (operatorRoot->type == FUNCTION_CALL) {
+    }
+    else if (operatorRoot->attribute.opval == MOD) {
+        genDivisionCode(outFile, topScope, arg1, reg);
+        // Move result to top of registerStack.
+        genMovlCode(outFile, "%edx", reg->registerName);
+    }
+    else if (operatorRoot->type == FUNCTION_CALL) {
         // This case should not happen?
         assert(0);
         startSubprogram(outFile, operatorRoot, topScope);

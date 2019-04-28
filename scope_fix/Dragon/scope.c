@@ -26,6 +26,7 @@ scope_t* mkscope(){
     newScope->curScopeSize = FRAME_BLOCK_SIZE;
     newScope->scopeBlockCounter = 8;// 8 bytes are needed by gcc on stack.
     newScope->tempsAddress = -1;
+    newScope->staticParentOffset = -1;
 
     return newScope;
 }

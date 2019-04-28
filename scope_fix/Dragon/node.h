@@ -35,6 +35,7 @@ node_t* node_insert(node_t* top, char* name);
 void setCodeName(node_t* top, char* name);
 char* getCodeName(node_t* top);
 node_t* getBottom(node_t* top);
+node_t* reverseList(node_t* top);
 
 /* Utility */
 void print_list(node_t* top);

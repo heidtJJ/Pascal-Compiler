@@ -3,7 +3,7 @@ program boo( input, output );
 begin
  read(a);
  read(b);
- c := a div b;
+ c := a / b;
  write(c)
 end.
 
