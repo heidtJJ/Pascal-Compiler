@@ -45,6 +45,7 @@
             = 48
 */
 #define ARGUMENT_1_OFFSET 48
+#define FOUR_REG_SIZE 32 // The size of 4 64-bit registers in bytes.
 
 #define RBP "%rbp"
 #define RAX "%rax"
@@ -387,7 +388,6 @@ void pushAllRegisters(FILE * outFile) {
 
     // Will be dummy. Stack size must always be a multiple of 16.
     genPushqCode(outFile, "%rdi");
-    
     genPushqCode(outFile, "%rdi");
     genPushqCode(outFile, "%rcx");
     genPushqCode(outFile, "%rbx");
@@ -397,7 +397,7 @@ void restoreAllRegisters(FILE * outFile) {
     genMovqCode(outFile, "0(%rsp)", "%rbx");
     genMovqCode(outFile, "4(%rsp)", "%rcx");
     genMovqCode(outFile, "8(%rsp)", "%rdi");
-    genRaiseStackPointer(outFile, 16);
+    genRaiseStackPointer(outFile, FOUR_REG_SIZE);
 }
 
 /*
