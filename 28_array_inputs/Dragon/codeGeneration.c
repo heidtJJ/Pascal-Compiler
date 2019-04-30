@@ -43,11 +43,13 @@
     ARGUMENT_1_OFFSET = 
             8 (64 bits) bytes for instruction pointer
             + 8 (64 bits) bytes * 4 registers saved for subprogam call
-            + 2 unknown words
+            + 64 bits of space for the first argument which is the static
+                parent base pointer.
             = 48
 */
 #define ARGUMENT_1_OFFSET 48
 #define FOUR_REG_SIZE 32 // The size of 4 64-bit registers in bytes.
+#define NUM_REGS_AVAL 4 // The size of 4 64-bit registers in bytes.
 
 #define RBP "%rbp"
 #define RAX "%rax"
@@ -807,7 +809,9 @@ void genExpressionUtil(FILE * outFile, tree_t * root, scope_t * topScope, short 
         int leftChildType = getExpressionType(topScope, root->leftChild);
         assert(leftChildType == INTEGER); // For now
         tree_t * leftChild = root->leftChild;
+        int leftChildLabel = leftChild->label;
         tree_t * rightChild = root->rightChild;
+        int rightChildLabel = rightChild->label;
         if (rightChild->label == 0) {
             // Right Child
             fprintf(stderr, "CASE 1\n");
@@ -833,7 +837,7 @@ void genExpressionUtil(FILE * outFile, tree_t * root, scope_t * topScope, short 
             registerStack = swapRegisterStack(registerStack);
 
             fputs("\n", outFile);
-        } else if (leftChild->label <= rightChild->label) {
+        } else if (leftChild->label <= rightChild->label && rightChild->label <= NUM_REGS_AVAL) {
             fprintf(stderr, "CASE 3\n");
 
             genExpressionUtil(outFile, leftChild, topScope, 1);
@@ -846,7 +850,7 @@ void genExpressionUtil(FILE * outFile, tree_t * root, scope_t * topScope, short 
             registerStack = pushRegister(registerStack, poppedReg);
             fputs("\n", outFile);
         } else {
-            assert(0);
+            fprintf(stderr, "CASE 4\n");
         }
     }
 }
@@ -1002,7 +1006,7 @@ void genIfBranching(FILE * outFile, tree_t * root, scope_t * topScope) {
         fputs("\n", outFile);
         genStatement(outFile, root->leftChild, topScope);
         fputs(branchString, outFile);
-        fputs("\n", outFile);
+        fputs(":\n", outFile);
 
         // Deallocate the branchString.
         free(branchString);
