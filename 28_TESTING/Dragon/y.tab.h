@@ -156,7 +156,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 28 "pc.y" /* yacc.c:1909  */
+#line 25 "pc.y" /* yacc.c:1909  */
 
     // This is yylval
     int ival; /* NUM */

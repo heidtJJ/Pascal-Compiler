@@ -55,6 +55,9 @@
 #define RBP "%rbp"
 #define RAX "%rax"
 
+unsigned int NO_FUNCTION_RETURN = 0x1;
+unsigned int NO_SIDE_EFFECTS = 0x2;
+
 extern int yyerror(char * );
 int getExpressionType(scope_t * curScope, tree_t * exprTree);
 int countDigits(int branchStringCounter);
@@ -1187,8 +1190,109 @@ void genStatement(FILE * outFile, tree_t * root, scope_t * topScope) {
         char varLocation[12];
         getIdOffset(outFile, idTree->attribute.nval, varLocation, NULL, topScope);
         genReadCode(outFile, varLocation);
-    } else {
+    } else if (root->type == COMPOUND_STATEMENT){
+        TreeList* statementList = root->leftChild->attribute.listVal;
+        while(statementList){
+            genStatement(outFile, statementList->statementTree, topScope);
+            statementList = statementList->next;
+        }
+    } 
+    else {
         fprintf(stderr, "root->type %d\n", root->type);
         yyerror("root->type error in genStatement\n");
     }
+}
+
+
+short genCode(FILE* outFile, tree_t* compoundStmtTree, scope_t* topScope, short subContainsSideEffects){
+    assert(compoundStmtTree->type == COMPOUND_STATEMENT);
+
+    /* Retrieve the scopeOwner for reference. */
+    node_t* scopeOwner = topScope->scopeOwner;
+        
+    /* Add space to scope for the offset for the static parent. */
+    addVariableToScope(topScope, sizeof(int));
+    topScope->staticParentOffset = addVariableToScope(topScope, sizeof(int));
+
+    /* Add space and create offsets for temporary registers on stack frame. */
+    setTemporaryRegisters(topScope);
+
+    /* Add space to scope for temp variables. Allocate for 6 temp variables */
+    topScope->tempsAddress = addVariableToScope(topScope, 6*sizeof(int));
+    
+    /* 
+        An additional 64-bit (2 bytes) argument is needed to pass the static 
+        parent base pointer to the subprogram called next. 
+    */
+    addVariableToScope(topScope, 2*sizeof(int));
+
+    // Retrieve statement list for semantics and code gen.
+    TreeList* statementList = compoundStmtTree->leftChild->attribute.listVal;
+
+    /* Find the space needed for passing arguments to a subprogram. */
+    int maxNumArguments = 0;
+    findMaxNumArguments(statementList, &maxNumArguments);
+    addVariableToScope(topScope, maxNumArguments);
+    fprintf(stderr, "------------------------------maxNumArguments = %d\n", maxNumArguments);
+    
+    /* Do code generation */
+    genCodePrintProcBegin(outFile, topScope);
+
+    if(statementList){
+        /* Setup flags to check for side effects. */
+        int flags = NO_SIDE_EFFECTS;
+        if(scopeOwner->nodeType == FUNCTION){
+            flags = flags | NO_FUNCTION_RETURN;
+        }
+
+        TreeList* curStmt = statementList;
+        while(curStmt != NULL){
+            fprintf(stderr, "\n\nBefore validateStatement flags=%d\n", flags);
+            validateStatement(topScope, curStmt->statementTree, &flags);
+            fprintf(stderr, "After validateStatement flags=%d\n", flags);
+            
+            fprintf(stderr, "In statement list loop\n");
+            tree_print(curStmt->statementTree);
+
+            /* Output code for the statement */
+            genStatement(outFile, curStmt->statementTree, topScope);
+
+            fprintf(stderr, "\nBEGIN STATEMENT PRINT\n\n");
+            tree_print(curStmt->statementTree);
+            fprintf(stderr, "\nEND STATEMENT PRINT\n\n");
+            
+            curStmt = popStatement(curStmt);
+        }
+
+        short containsSideEffects = hasSideEffects(flags);
+        if(scopeOwner->nodeType == FUNCTION){
+            // Check if the flags indicate side effects or no return statement.
+            if(hasNoReturnStmt(flags)){
+                yyerror("Function return has no return statement in subprogram_declaration\n");
+            }
+            if(containsSideEffects){
+                yyerror("Function return has SIDE EFFECT in subprogram_declaration\n");
+            }
+        }
+        else{ /* scopeOwner->nodeType == PROCEDURE */
+            assert(scopeOwner->nodeType == PROCEDURE);
+            scopeOwner->data.procedureInfo.hasSideEffects = 
+                scopeOwner->data.procedureInfo.hasSideEffects || containsSideEffects;
+        }        
+
+        
+
+        node_t* subpgmHeadNode = topScope->scopeOwner;
+        short cpndStmtSideEffects = hasSideEffects(flags);
+        if(subpgmHeadNode->nodeType == FUNCTION && (subContainsSideEffects || cpndStmtSideEffects)){
+            /* No side effects allowed in function compound_statement or subprogram_declarations. */
+            fprintf(stderr, "In function name %s\n", subpgmHeadNode->name);
+            yyerror("subprogram_declarations contain side effects in subprogram_declaration\n");
+        }
+        subContainsSideEffects = subContainsSideEffects || cpndStmtSideEffects;
+    }
+
+    /* Output code for footers of a subprogram */
+    genCodePrintProcEnd(outFile, getCodeName(topScope->scopeOwner));
+    return subContainsSideEffects;
 }

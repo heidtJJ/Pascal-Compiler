@@ -5,6 +5,7 @@
 #include "scope.h"
 
 char* getFileName(char* programId);
+short genCode(FILE* outFile, tree_t* root, scope_t* topScope, short subContainsSideEffects);
 void genStatement(FILE* outFile, tree_t* root, scope_t* topScope);
 void genExpression(FILE* outFile, tree_t* root, scope_t* topScope, short isLeftMost);
 void genCodePrintMain(FILE* outFile, char* fileName);

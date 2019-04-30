@@ -20,9 +20,6 @@
     
     FILE* outFile;
 
-    unsigned int NO_FUNCTION_RETURN = 0x1;
-    unsigned int NO_SIDE_EFFECTS = 0x2;
-
 %}
 
 %union {
@@ -129,6 +126,9 @@ program
     compound_statement
     '.'
     { 
+        tree_t* compoundStmtTree = $12;
+        genCode(outFile, compoundStmtTree, top_scope, 0);
+
         free_scope(top_scope);
         fprintf(stderr, "END OF PROGRAM\n"); 
 
@@ -237,29 +237,16 @@ subprogram_declaration
     */
     : subprogram_head declarations subprogram_declarations compound_statement
     {
-        tree_t* cpmdStatement = $4;
-        unsigned int subContainsSideEffects = $3;
-        if(cpmdStatement == NULL){
-            $$ = subContainsSideEffects;
-        }
-        else{
-            /* compound_statement already checked for side effects */
-            assert(cpmdStatement->type == INUM);/* Indicates side effects or not */
+        /* Value indicating whether subprogram_declarations have side effects. */
+        short subContainsSideEffects = $3;
 
-            node_t* subpgmHeadNode = $1;
-            int cpndStmtSideEffects = cpmdStatement->attribute.ival;
-            if(subpgmHeadNode->nodeType == FUNCTION && subContainsSideEffects){
-                /* No side effects allowed in compound_statement or subprogram_declarations. */
-                fprintf(stderr, "In function name %s\n", subpgmHeadNode->name);
-                yyerror("subprogram_declarations contain side effects in subprogram_declaration\n");
-            }
-            subContainsSideEffects = subContainsSideEffects || cpndStmtSideEffects;
+        /* Retrieve the list of statements. */
+        tree_t* compoundStmtTree = $4;
+        
+        $$ = genCode(outFile, compoundStmtTree, top_scope, subContainsSideEffects);
 
-            $$ = subContainsSideEffects; 
-            
-            top_scope = pop_scope(top_scope); 
-            tree_free(cpmdStatement);
-        }
+        top_scope = pop_scope(top_scope); 
+        tree_free(compoundStmtTree);
     }
     ;
 
@@ -297,7 +284,7 @@ subprogram_head
         arguments ';'
         {
             /* Set the return type and argument types of the node */
-            node_t* procedureNode = top_scope->scopeOwner;;
+            node_t* procedureNode = top_scope->scopeOwner;
 
             if(procedureNode->nodeType != PROCEDURE){
                 yyerror("PROCEDURE error in subprogram_head\n");
@@ -394,79 +381,8 @@ compound_statement
             if(top_scope == NULL){
                 yyerror("Invalid scope in subprogram_declaration\n");
             }
-            node_t* scopeOwner = top_scope->scopeOwner;
-            TreeList* statementList = $2;
-
-            /* Setup flags to check for side effects. */
-            int flags = NO_SIDE_EFFECTS;
-            if(scopeOwner->nodeType == FUNCTION){
-                flags = flags | NO_FUNCTION_RETURN;
-            }
             
-            /* Add space to scope for the offset for the static parent. */
-            addVariableToScope(top_scope, sizeof(int));
-            top_scope->staticParentOffset = addVariableToScope(top_scope, sizeof(int));
-
-            /* Add space and create offsets for temporary registers on stack frame. */
-            setTemporaryRegisters(top_scope);
-
-            /* Add space to scope for temp variables. Allocate for 6 temp variables */
-            top_scope->tempsAddress = addVariableToScope(top_scope, 6*sizeof(int));
-            
-            /* 
-                An additional 64-bit (2 bytes) argument is needed to pass the static 
-                parent base pointer to the subprogram called next. 
-            */
-            addVariableToScope(top_scope, 2*sizeof(int));
-
-            /* Find the space needed for passing actual arguments to a subprogram. */
-            int maxNumArguments = 0;
-            findMaxNumArguments(statementList, &maxNumArguments);
-            fprintf(stderr, "------------------------------maxNumArguments = %d\n", maxNumArguments);
-
-            addVariableToScope(top_scope, maxNumArguments);
-            
-            /* Do code generation */
-            genCodePrintProcBegin(outFile, top_scope);
-
-            TreeList* curStmt = statementList;
-            while(curStmt != NULL){
-                fprintf(stderr, "\n\nBefore validateStatement flags=%d\n", flags);
-                validateStatement(top_scope, curStmt->statementTree, &flags);
-                fprintf(stderr, "After validateStatement flags=%d\n", flags);
-                
-                fprintf(stderr, "In statement list loop\n");
-                tree_print(curStmt->statementTree);
-
-                /* Output code for the statement */
-                genStatement(outFile, curStmt->statementTree, top_scope);
-
-                fprintf(stderr, "\nBEGIN STATEMENT PRINT\n\n");
-                tree_print(curStmt->statementTree);
-                fprintf(stderr, "\nEND STATEMENT PRINT\n\n");
-                
-                curStmt = popStatement(curStmt);
-            }
-            int containsSideEffects = hasSideEffects(flags);
-            /*fprintf(stderr, "\n\n\n HAS %d SIDE in %s\n", containsSideEffects,scopeOwner->name);*/
-
-            if(scopeOwner->nodeType == FUNCTION){
-                if(hasNoReturnStmt(flags)){
-                    yyerror("Function return has no return statement in subprogram_declaration\n");
-                }
-                if(containsSideEffects){
-                    yyerror("Function return has SIDE EFFECT in subprogram_declaration\n");
-                }
-            }
-            else{ /* scopeOwner->nodeType == PROCEDURE */
-                assert(scopeOwner->nodeType == PROCEDURE);
-                scopeOwner->data.procedureInfo.hasSideEffects = containsSideEffects;
-            }        
-
-            genCodePrintProcEnd(outFile, getCodeName(top_scope->scopeOwner));
-            $$ = mkinum(containsSideEffects);
-
-            fprintf(stderr, "RETURNING SIDE EFFECT %d %d\n\n", containsSideEffects, flags);
+            $$ = mktree(COMPOUND_STATEMENT, mktreeList($2), NULL);
         }
     ;
 

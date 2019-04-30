@@ -10,110 +10,70 @@
 	.text
 	.globl	main
 	.type	main, @function
-boo:
+boo_moo:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	subq	$96, %rsp # lowering the stack pointer.
+	subq	$80, %rsp # lowering the stack pointer.
 	movq	48(%rbp), %rax
-	movq	%rax, -36(%rbp)
+	movq	%rax, -16(%rbp)
+	movl	56(%rbp), %eax
+	movl	%eax, -8(%rbp)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -68(%rbp)
-	movl	$1, %ebx
+	movl	%esi, -48(%rbp)
+	movl	$13, %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-68(%rbp), %esi
-	movl	%ebx, -20(%rbp)
+	movl	-48(%rbp), %esi
+	movq	-16(%rbp), %rax
+	movl	%ebx, -8(%rax)
 	# Putting current return value to temporary location before expression.
-	movl	%esi, -68(%rbp)
-	movl	$2, %ebx
+	movl	%esi, -48(%rbp)
+	movq	-16(%rbp), %rax
+	movl	-8(%rax), %ebx
 	# Restoring current return value to temporary location after expression.
-	movl	-68(%rbp), %esi
-	movl	%ebx, -24(%rbp)
-	# Putting current return value to temporary location before expression.
-	movl	%esi, -68(%rbp)
-	movl	$3, %ebx
-	# Restoring current return value to temporary location after expression.
-	movl	-68(%rbp), %esi
-	movl	%ebx, -28(%rbp)
-	# Putting current return value to temporary location before expression.
-	movl	%esi, -68(%rbp)
-	movl	-20(%rbp), %ebx
-	movl	-24(%rbp), %ecx
-	addl	-28(%rbp), %ecx
-
-	imull	%ecx, %ebx
-
-	movl	-20(%rbp), %ecx
-	movl	-24(%rbp), %edi
-	addl	-28(%rbp), %edi
-
-	imull	%edi, %ecx
-
-	addl	%ecx, %ebx
-
-	movl	%ebx, -40(%rbp)
-	movl	-20(%rbp), %ebx
-	movl	-24(%rbp), %ecx
-	addl	-28(%rbp), %ecx
-
-	imull	%ecx, %ebx
-
-	movl	-20(%rbp), %ecx
-	movl	-24(%rbp), %edi
-	addl	-28(%rbp), %edi
-
-	imull	%edi, %ecx
-
-	addl	%ecx, %ebx
-
-	imull	-40(%rbp), %ebx
-	movl	%ebx, -40(%rbp)
-	movl	-20(%rbp), %ebx
-	movl	-24(%rbp), %ecx
-	addl	-28(%rbp), %ecx
-
-	imull	%ecx, %ebx
-
-	movl	-20(%rbp), %ecx
-	movl	-24(%rbp), %edi
-	addl	-28(%rbp), %edi
-
-	imull	%edi, %ecx
-
-	addl	%ecx, %ebx
-
-	movl	%ebx, -44(%rbp)
-	movl	-20(%rbp), %ebx
-	movl	-24(%rbp), %ecx
-	addl	-28(%rbp), %ecx
-
-	imull	%ecx, %ebx
-
-	movl	-20(%rbp), %ecx
-	movl	-24(%rbp), %edi
-	addl	-28(%rbp), %edi
-
-	imull	%edi, %ecx
-
-	addl	%ecx, %ebx
-
-	imull	-44(%rbp), %ebx
-	addl	-40(%rbp), %ebx
-	# Restoring current return value to temporary location after expression.
-	movl	-68(%rbp), %esi
-	movl	%ebx, -8(%rbp)
-	# Putting current return value to temporary location before expression.
-	movl	%esi, -68(%rbp)
-	movl	-8(%rbp), %ebx
-	# Restoring current return value to temporary location after expression.
-	movl	-68(%rbp), %esi
+	movl	-48(%rbp), %esi
 	# Putting current return value to temporary location printf.
-	movl	%esi, -56(%rbp)
+	movl	%esi, -36(%rbp)
 	movl	%ebx, %esi
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
 	# Restoring current return value to temporary location after printf.
-	movl	-56(%rbp), %esi
+	movl	-36(%rbp), %esi
+	leave
+	ret
+.boo_moo:
+	.size	boo_moo, .-boo_moo
+	.globl	main
+	.type	main, @function
+boo:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$80, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	# Putting current return value to temporary location before expression.
+	movl	%esi, -52(%rbp)
+	movq	%rbp, %rax
+	movq	%rax, -80(%rbp)
+	# Putting current return value to temporary location before expression.
+	movl	%esi, -48(%rbp)
+	movl	$0, %ebx
+	# Restoring current return value to temporary location after expression.
+	movl	-48(%rbp), %esi
+	movl	%ebx, %eax
+	movl	%eax, -72(%rbp)
+# Putting regs on the stack.
+	pushq	%rdi
+	pushq	%rdi
+	pushq	%rcx
+	pushq	%rbx
+	call	boo_moo
+	movq	0(%rsp), %rbx
+	movq	4(%rsp), %rcx
+	movq	8(%rsp), %rdi
+	addq	$32, %rsp # raising the stack pointer.
+	# Restoring current return value to temporary location after expression.
+	movl	-52(%rbp), %esi
 	leave
 	ret
 .boo:

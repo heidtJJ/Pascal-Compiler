@@ -17,7 +17,7 @@ extern unsigned int NO_SIDE_EFFECTS;
     Given flags, return if the NO_SIDE_EFFECTS bit
     is not set.
 */
-int hasSideEffects(int flags){
+short hasSideEffects(int flags){
     if(!(flags & NO_SIDE_EFFECTS)){
         return 1;
     }
@@ -439,6 +439,14 @@ void validateStatement(scope_t* curScope, tree_t* stmtTree, int* flags){
         // Validate the variable. Could be an array access.
         int expressionType = getExpressionType(curScope, readVariable);
     } 
+    else if(stmtTree->type == COMPOUND_STATEMENT){
+        // $$ = mktree(COMPOUND_STATEMENT, mktreeList($2), NULL);
+        TreeList* statementList = stmtTree->leftChild->attribute.listVal;
+        while(statementList){
+            validateStatement(curScope, statementList->statementTree, flags); 
+            statementList = statementList->next;   
+        }
+    }
     else{
         fprintf(stderr, "stmtTree->type %d\n", stmtTree->type);
         yyerror("NOTHING IN validateStatement");
