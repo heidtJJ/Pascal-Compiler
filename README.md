@@ -37,4 +37,98 @@ Given by Tino: Simple Semantic Rules for the Dragon Pascal subset
    6.2. Procedures must accept exactly the same number of arguments as is 
         declared in its header, with the correct sequence of types
         
+        
 <strong>Floating point (real) numbers are not currently supported.</strong>
+
+
+Example input Pascal file:
+
+program boo( input, output );
+ var x: integer;
+ procedure moo(a:integer);
+ begin
+ 	x := 13;
+ 	write(x)
+ end;
+begin
+ moo(0)
+end.
+
+Output x86 Assembly (64-bit):
+	.text
+	.section	.rodata
+.LC0:
+	.string	"%d\n"
+	.text
+	.globl	main
+	.type	main, @function
+boo_moo:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$80, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movl	56(%rbp), %eax
+	movl	%eax, -8(%rbp)
+	movl	$13, %ebx
+	movq	-16(%rbp), %rax
+	movl	%ebx, -8(%rax)
+	movq	-16(%rbp), %rax
+	movl	-8(%rax), %ebx
+	movl	%esi, -36(%rbp)
+	movl	%ebx, %esi
+	leaq	.LC0(%rip), %rdi
+	movl	$0, %eax
+	call	printf
+
+	movl	-36(%rbp), %esi
+	leave
+	ret
+.boo_moo:
+	.size	boo_moo, .-boo_moo
+	.globl	main
+	.type	main, @function
+boo:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$80, %rsp # lowering the stack pointer.
+	movq	48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movl	%esi, -48(%rbp)
+	movq	%rbp, %rax
+	movq	%rax, -80(%rbp)
+	movl	$0, %ebx
+	movl	%ebx, %eax
+	movl	%eax, -72(%rbp)
+	pushq	%rdi
+	pushq	%rdi
+	pushq	%rcx
+	pushq	%rbx
+	call	boo_moo
+	movq	0(%rsp), %rbx
+	movq	4(%rsp), %rcx
+	movq	8(%rsp), %rdi
+	addq	$32, %rsp # raising the stack pointer.
+	movl	-48(%rbp), %esi
+	leave
+	ret
+.boo:
+	.size	boo, .-boo
+	.globl	main
+	.type	main, @function
+main:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	movl	$0, %eax
+	call	boo
+	movl	$0, %eax
+	leave
+	ret
+.main:
+	.size	main, .-main
+	.ident	"GCC: (Ubuntu 8.2.0-7ubuntu1) 8.2.0"
+	.section	.note.GNU-stack,"",@progbits
+
+
+
+
