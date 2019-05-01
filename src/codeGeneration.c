@@ -458,7 +458,6 @@ void genPrintfCode(FILE *outFile, scope_t *topScope, char *stackLocation)
     fputs("\tmovl\t", outFile);
     fputs(stackLocation, outFile);
     fputs(printfEndCode, outFile);
-    fputs("\n", outFile);
 
     // Restore %esi.
     genMovlCode(outFile, tempLocation, ESI);
