@@ -9,33 +9,33 @@ Given by Tino: Simple Semantic Rules for the Dragon Pascal subset
    1.4. Function and procedure names exist in the scope they are defined (and not in their own scopes)<br>
    1.5. Local objects cease to exist once their scopes cease to exist<br>
 
-2. Semantic rules for Expressions
-   2.1. Expressions return typed-values
-   2.2. Objects must be declared before they used in expressions
-   2.3. Objects of different types cannot appear in the same expression (no type promotions)
+2. Semantic rules for Expressions<br>
+   2.1. Expressions return typed-values<br>
+   2.2. Objects must be declared before they used in expressions<br>
+   2.3. Objects of different types cannot appear in the same expression (no type promotions)<br>
 
-3. Semantic rules for Statements
-   3.1. Statements do not return values
+3. Semantic rules for Statements<br>
+   3.1. Statements do not return values<br>
    3.2. The test expression for IF-THEN, IF-THEN-ELSE, WHILE-DO must be Boolean-valued;
-        note that the Boolean type must be implicitly defined
-   3.3. The ELSE clause always binds to the closest IF (resolution of the dangling ELSE problem)
-   3.4. The variable type in FOR-DO must match the types of lower bound and upper bound expressions
+        note that the Boolean type must be implicitly defined<br>
+   3.3. The ELSE clause always binds to the closest IF (resolution of the dangling ELSE problem)<br>
+   3.4. The variable type in FOR-DO must match the types of lower bound and upper bound expressions<br>
 
-4. Semantic rules for Arrays
-   4.1. Non-integer valued expressions cannot be used for indexing arrays
+4. Semantic rules for Arrays<br>
+   4.1. Non-integer valued expressions cannot be used for indexing arrays<br>
 
 5. Semantic rules for Functions 
-   5.1. Function calls return values of type Integer or Real
+   5.1. Function calls return values of type Integer or Real<br>
    5.2. Function must contain a "return" statement within its own body;
-        this is of the form: <function_name> := <expression>
+        this is of the form: <function_name> := <expression><br>
    5.3. Functions must accept exactly the same number of arguments as is 
-        declared in its header, with the correct sequence of types
-   5.4. Functions are not allowed to update the value of nonlocal objects (via assignment statements)
+        declared in its header, with the correct sequence of types<br>
+   5.4. Functions are not allowed to update the value of nonlocal objects (via assignment statements)<br>
 
 6. Semantic rules for Procedures
-   6.1. Procedure calls do not return values
+   6.1. Procedure calls do not return values<br>
    6.2. Procedures must accept exactly the same number of arguments as is 
-        declared in its header, with the correct sequence of types
+        declared in its header, with the correct sequence of types<br>
         
         
 <strong>Floating point (real) numbers are not currently supported for code generation (although they are semantically supported). Only integers may be used.</strong>
