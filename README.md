@@ -1,6 +1,6 @@
 # Pascal-Compiler
 
-Given by Tino: Simple Semantic Rules for the Dragon Pascal subset
+Requirements by Tino: Simple Semantic Rules for the Dragon Pascal subset
 
 1. Semantic rules for Scoping<br>
    1.1. Local objects cannot be declared more than once<br>
