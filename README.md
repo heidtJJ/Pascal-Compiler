@@ -38,7 +38,7 @@ Given by Tino: Simple Semantic Rules for the Dragon Pascal subset
         declared in its header, with the correct sequence of types
         
         
-<strong>Floating point (real) numbers are not currently supported :( Only integers can be used.</strong>
+<strong>Floating point (real) numbers are not currently supported for code generation (although they are semantically supported). Only integers may be used.</strong>
 
 
 Example input Pascal file:
