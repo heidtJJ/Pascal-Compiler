@@ -132,9 +132,13 @@ In the <a href="src">src</a> directory, execute:
 make clean
 make
 ```
-Move the executable file 'mypc' to <a href="Code Generation Tests Created by Tino/CodeGeneration/">the test cases folder.</a> Run a test case in the format:
+Move the executable file 'mypc' to <a href="Code Generation Tests Created by Tino/CodeGeneration/">the test cases folder.</a> Run a test case in the format (note t0.p is an example file):
 ```
 ./mypc < t0.p
-gcc boo.s
+```
+A '.s' file will be created. This is the x86 assembly file. GCC compile it and run it executing:
+```
+gcc filename.s
 ./a.out
 ```
+
