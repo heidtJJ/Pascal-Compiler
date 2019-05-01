@@ -81,7 +81,6 @@ boo_moo:
 	leaq	.LC0(%rip), %rdi
 	movl	$0, %eax
 	call	printf
-
 	movl	-36(%rbp), %esi
 	leave
 	ret
