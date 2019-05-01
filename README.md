@@ -126,3 +126,15 @@ main:
 	.ident	"GCC: (Ubuntu 8.2.0-7ubuntu1) 8.2.0"
 	.section	.note.GNU-stack,"",@progbits
 ```
+<strong>To run the code:</strong> I used 64-bit Ubuntu 18.04 to develop. There is no gurantee that the compiler will 'compile' on other platforms. <br>
+In the <a href="src">src</a> directory, execute:
+```
+make clean
+make
+```
+Move mypc to <a href="Code Generation Tests Created by Tino">the test cases folder.</a>
+```
+./mypc < boo.p
+gcc boo.s
+./a.out
+```
