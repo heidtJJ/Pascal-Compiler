@@ -32,7 +32,7 @@ Requirements by Tino: Simple Semantic Rules for the Dragon Pascal subset
         declared in its header, with the correct sequence of types<br>
    5.4. Functions are not allowed to update the value of nonlocal objects (via assignment statements)<br>
 
-6. Semantic rules for Procedures
+6. Semantic rules for Procedures<br>
    6.1. Procedure calls do not return values<br>
    6.2. Procedures must accept exactly the same number of arguments as is 
         declared in its header, with the correct sequence of types<br>
