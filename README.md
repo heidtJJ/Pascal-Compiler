@@ -132,9 +132,9 @@ In the <a href="src">src</a> directory, execute:
 make clean
 make
 ```
-Move mypc to <a href="Code Generation Tests Created by Tino/CodeGeneration/">the test cases folder.</a>
+Move the executable file 'mypc' to <a href="Code Generation Tests Created by Tino/CodeGeneration/">the test cases folder.</a> Run a test case in the format
 ```
-./mypc < boo.p
+./mypc < t0.p
 gcc boo.s
 ./a.out
 ```
