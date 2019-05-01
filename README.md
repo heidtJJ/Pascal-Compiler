@@ -93,8 +93,6 @@ boo:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	subq	$80, %rsp # lowering the stack pointer.
-	movq	48(%rbp), %rax
-	movq	%rax, -16(%rbp)
 	movl	%esi, -48(%rbp)
 	movq	%rbp, %rax
 	movq	%rax, -80(%rbp)
