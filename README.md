@@ -40,7 +40,7 @@ Requirements by Tino: Simple Semantic Rules for the Dragon Pascal subset
         
 <strong>Floating point (real) numbers are not currently supported for code generation (although they are semantically supported). Only integers may be used.</strong>
 
-
+View <a href="yes" >faes</a><br>
 Example input Pascal file:
 ```
 program boo( input, output );
