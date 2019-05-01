@@ -100,7 +100,6 @@ boo:
 	movl	%ebx, %eax
 	movl	%eax, -72(%rbp)
 	pushq	%rdi
-	pushq	%rdi
 	pushq	%rcx
 	pushq	%rbx
 	call	boo_moo
