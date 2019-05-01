@@ -42,7 +42,7 @@ Given by Tino: Simple Semantic Rules for the Dragon Pascal subset
 
 
 Example input Pascal file:
-
+```
 program boo( input, output );
  var x: integer;
  procedure moo(a:integer);
@@ -53,8 +53,9 @@ program boo( input, output );
 begin
  moo(0)
 end.
-
+```
 Output x86 Assembly (64-bit):
+```
 	.text
 	.section	.rodata
 .LC0:
@@ -128,7 +129,4 @@ main:
 	.size	main, .-main
 	.ident	"GCC: (Ubuntu 8.2.0-7ubuntu1) 8.2.0"
 	.section	.note.GNU-stack,"",@progbits
-
-
-
-
+```
