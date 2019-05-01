@@ -2,12 +2,12 @@
 
 Given by Tino: Simple Semantic Rules for the Dragon Pascal subset
 
-1. Semantic rules for Scoping
-   1.1. Local objects cannot be declared more than once
-   1.2. Local objects hide non-local objects with the same name
-   1.3. Non-local objects should be visible from inner scopes (unless a local object of the same name exists)
-   1.4. Function and procedure names exist in the scope they are defined (and not in their own scopes)
-   1.5. Local objects cease to exist once their scopes cease to exist
+1. Semantic rules for Scoping<br>
+   1.1. Local objects cannot be declared more than once<br>
+   1.2. Local objects hide non-local objects with the same name<br>
+   1.3. Non-local objects should be visible from inner scopes (unless a local object of the same name exists)<br>
+   1.4. Function and procedure names exist in the scope they are defined (and not in their own scopes)<br>
+   1.5. Local objects cease to exist once their scopes cease to exist<br>
 
 2. Semantic rules for Expressions
    2.1. Expressions return typed-values
