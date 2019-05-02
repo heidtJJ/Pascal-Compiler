@@ -16,7 +16,7 @@ An incomplete list of the supported features of this language:<br>
  - if then statements<br>
  - if then else statements<br>
  - Integer data types (only)<br>
- - Line number given when compilation fails<br>
+ - Line number given on failed compilation<br>
  - Semantic checking (given below) <br>
 <br>
 Look <a href="/Code Generation Tests Created by Tino/CodeGeneration">here</a> for some programs which compile.<br><br>
