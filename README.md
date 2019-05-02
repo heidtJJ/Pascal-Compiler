@@ -7,6 +7,8 @@ An incomplete list of the supported features of this language:<br>
 	- Functions (No side effects allowed and return statement required)<br>
 	- Procedures<br>
 	- Subprograms<br>
+	- Scoping
+	- Recursion
 	- 1 dimensional arrays<br>
 	- Expressions (multiplication, division, addition, subtraction, modulus)<br>
 	- Variables<br>
