@@ -48,7 +48,7 @@ Requirements by Tino: Simple Semantic Rules for the Dragon Pascal subset
 5. Semantic rules for Functions 
    5.1. Function calls return values of type Integer or Real<br>
    5.2. Function must contain a "return" statement within its own body;
-        this is of the form: <br>\<function_name\> := \<expression\> <br>
+        this is of the form: <br> \<function_name\> := \<expression\> <br>
    5.3. Functions must accept exactly the same number of arguments as is 
         declared in its header, with the correct sequence of types<br>
    5.4. Functions are not allowed to update the value of nonlocal objects (via assignment statements)<br>
