@@ -4,20 +4,20 @@ This is a compiler which supports a subset of the programming language, Pascal.<
 An incomplete list of the supported features of this language:<br>
  - while loops<br>
  - for do loops<br>
-        - Functions (No side effects allowed and return statement required)<br>
-        - Procedures<br>
-        - Subprograms<br>
-        - Scoping
-        - Recursion
-        - 1 dimensional arrays<br>
-        - Expressions (multiplication, division, addition, subtraction, modulus)<br>
-	- Variables<br>
-	- Variable I/O from scanf and printf<br>
-	- if then statements<br>
-	- if then else statements<br>
-	- Integer data types (only)<br>
-	- Line number given when compilation fails<br>
-	- Semantic checking (given below) <br>
+ - Functions (No side effects allowed and return statement required)<br>
+ - Procedures<br>
+ - Subprograms<br>
+ - Scoping
+ - Recursion
+ - 1 dimensional arrays<br>
+ - Expressions (multiplication, division, addition, subtraction, modulus)<br>
+ - Variables<br>
+ - Variable I/O from scanf and printf<br>
+ - if then statements<br>
+ - if then else statements<br>
+ - Integer data types (only)<br>
+ - Line number given when compilation fails<br>
+ - Semantic checking (given below) <br>
 <br>
 Look <a href="/Code Generation Tests Created by Tino/CodeGeneration">here</a> for some programs which compile.<br><br>
 
