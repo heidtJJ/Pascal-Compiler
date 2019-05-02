@@ -1,6 +1,6 @@
 # Pascal-Compiler
 
-This is a compiler which supports a subset of the programming language, Pascal.<br>
+This is a compiler which supports a subset of the programming language, Pascal.<br><br>
 An incomplete list of the supported features of this language:<br>
 	- while loops<br>
 	- for do loops<br>
@@ -17,7 +17,7 @@ An incomplete list of the supported features of this language:<br>
 	- Line number given when compilation fails<br>
 	- Semantics <br>
 <br>
-Look <a href="">here</a> for some programs which compile.
+Look <a href="">here</a> for some programs which compile.<br><br>
 
 Requirements by Tino: Simple Semantic Rules for the Dragon Pascal subset
 
