@@ -17,7 +17,7 @@ An incomplete list of the supported features of this language:<br>
 	- if then else statements<br>
 	- Integer data types (only)<br>
 	- Line number given when compilation fails<br>
-	- Semantics <br>
+	- Semantic checking (given below) <br>
 <br>
 Look <a href="">here</a> for some programs which compile.<br><br>
 
