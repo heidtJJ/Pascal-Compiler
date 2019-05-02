@@ -2,8 +2,8 @@
 
 This is a compiler which supports a subset of the programming language, Pascal.<br><br>
 An incomplete list of the supported features of this language:<br>
-        - while loops<br>
-        - for do loops<br>
+ - while loops<br>
+ - for do loops<br>
         - Functions (No side effects allowed and return statement required)<br>
         - Procedures<br>
         - Subprograms<br>
