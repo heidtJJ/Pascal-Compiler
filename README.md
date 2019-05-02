@@ -1,6 +1,6 @@
 # Pascal-Compiler
 
-This is a compiler which supports a subset of the programming language, Pascal. The compiler converts the Pascal code to 64-bit assembly code.<br><br>
+This is a compiler which supports a subset of the programming language, Pascal. The compiler converts the Pascal code to x86-64 assembly code.<br><br>
 An incomplete list of the supported features of this language:<br>
  - while loops<br>
  - for do loops<br>
