@@ -12,7 +12,7 @@ An incomplete list of the supported features of this language:<br>
  - 1 dimensional arrays<br>
  - Expressions (multiplication, division, addition, subtraction, modulus)<br>
  - Variables<br>
- - Variable I/O from scanf and printf<br>
+ - I/O from standard input/output<br>
  - if then statements<br>
  - if then else statements<br>
  - Integer data types (only)<br>
