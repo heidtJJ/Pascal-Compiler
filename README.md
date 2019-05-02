@@ -19,7 +19,7 @@ An incomplete list of the supported features of this language:<br>
 	- Line number given when compilation fails<br>
 	- Semantic checking (given below) <br>
 <br>
-Look <a href="">here</a> for some programs which compile.<br><br>
+Look <a href="/Code Generation Tests Created by Tino/CodeGeneration">here</a> for some programs which compile.<br><br>
 
 Requirements by Tino: Simple Semantic Rules for the Dragon Pascal subset
 
